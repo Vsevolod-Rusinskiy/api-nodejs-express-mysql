@@ -13,15 +13,9 @@ async function query() {
 
     const response = await query.json();
     console.log('>>>>', response);
-
-//     fetch('https://jsonplaceholder.typicode.com/todos/1')
-//   .then(response => response.json())
-//   .then(json => console.log(json))
-
 }
 
 query()
 
-// btn.addEventListener('click', query)
 
 
