@@ -3,8 +3,8 @@ import ip from 'ip';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import Response from './domain/response.js';
-import HttpStatus from './controller/user.controller.js';
-import userRoutes from './route/route.user.js';
+// import {HttpStatus} from './controller/user.controller.js';
+import userRouter from './route/route.user.js';
 import logger from './util/logger.js';
 
 dotenv.config();
@@ -15,8 +15,7 @@ app.use(cors({
     origin: '*'
 }));
 
-app.use('/', userRoutes)
-// app.use('/user', userRoutes)
+app.use('/', userRouter)
 app.get('/', (req, res) => res.send(new Response(HttpStatus.OK.code, HttpStatus.OK.status, 'API, v1.0.0 - All Systems Go',)));
 app.all('*', (req, res) => res.status(HttpStatus.NOT_FOUND.code)
   .send(new Response(HttpStatus.NOT_FOUND.code, HttpStatus.NOT_FOUND.status, 'Route does not exist on the server')));

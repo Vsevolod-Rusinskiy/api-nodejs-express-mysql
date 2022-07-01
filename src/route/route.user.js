@@ -1,32 +1,28 @@
 import express from 'express';
-import {
-    getUsers,
-    getUser,
-    createUser,
-    updateUser
-} from '../controller/user.controller.js'
+import controller  from '../controller/user.controller.js'
 
-const userRoutes = express.Router();
+const router = express.Router();
 
 // 2 
 // Регистрация пользователя (POST /user/register) // ❗ create user
 // Авторизация пользователя (POST /user/login)
 
-userRoutes.route('/register')
-    .post(createUser);
+router.post('/register', controller.registration)    // .post(createUser);
+   
 
-userRoutes.route('/login')
-    .post(createUser);
+router.post('/login', controller.login)       // .post(createUser);
+   
 
-userRoutes.route('/profiles')
-    .get(getUsers)
+router.get('/users', controller.getUsers)     // .get(getUsers)
+    
 
-userRoutes.route('/profile/:id')
-    .get(getUser)
-    .put(updateUser)
+router.post('/profile/:id')   // .get(getU
+router.put('/profile/:id')    // .put(updateUser)ser)
+    
+    
 
 
 
 
-export default userRoutes;
+export default router;
 
