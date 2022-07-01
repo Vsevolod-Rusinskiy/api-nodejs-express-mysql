@@ -2,7 +2,11 @@ import database from '../config/mysql.config.js';
 import Response from '../domain/response.js';
 import logger from '../util/logger.js';
 import QUERY from '../query/user.query.js';
-import bcrypt from 'bcryptjs'
+import bcrypt from 'bcryptjs';
+import {
+    validationResult
+} from 'express-validator';
+
 
 // export const HttpStatus = {
 //     OK: {
@@ -100,11 +104,18 @@ class Controller {
     async registration(req, res) {
         try {
             logger.info(`${req.method} ${req.originalUrl}, fetching user`);
-            const {
-                email,
-                user_password
-            } = req.body;
 
+            const errors = validationResult(req);
+            if (!errors.isEmpty()){
+                return  res.send(new Response(200, 'OK', `Registration error`, errors));
+            }
+
+                const {
+                    email,
+                    user_password
+                } = req.body;
+
+            // TODO error ???
             database.query(QUERY.SELECT_USER_EMAIL, [email], (error, candidate) => {
                 if (candidate[0]) {
                     return res.send(new Response(200, 'OK', `User already exists`));
@@ -112,12 +123,13 @@ class Controller {
                 const hashPassword = bcrypt.hashSync(user_password, 7);
                 req.body.user_password = hashPassword;
 
+                // TODO error ???
                 database.query(QUERY.CREATE_USER_PROCEDURE, Object.values(req.body), (error, results) => {
-                    res.send(new Response(200, 'OK', `login successfully`));
+                    return res.send(new Response(200, 'OK', `login successfully`));
                 })
             })
         } catch (error) {
-            res.send(new Response(400, 'OK', `Registration error`));
+            res.send(new Response(400, 'Error', `Registration error`));
         }
     }
 
