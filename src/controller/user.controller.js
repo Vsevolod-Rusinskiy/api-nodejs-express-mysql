@@ -7,6 +7,11 @@ import {
     validationResult
 } from 'express-validator';
 
+import pkg from 'jsonwebtoken'
+
+const {
+    jwt
+} = pkg
 
 // export const HttpStatus = {
 //     OK: {
@@ -99,6 +104,10 @@ import {
 //     });
 // };
 // TODO can i use object instead here?
+
+const generateAccessToken = (id) => {
+    const jwt.sign()
+}
 class Controller {
 
     async registration(req, res) {
@@ -106,16 +115,17 @@ class Controller {
             logger.info(`${req.method} ${req.originalUrl}, fetching user`);
 
             const errors = validationResult(req);
-            if (!errors.isEmpty()){
-                return  res.send(new Response(200, 'OK', `Registration error`, errors));
+            if (!errors.isEmpty()) {
+                return res.send(new Response(200, 'OK', `Registration error`, errors));
             }
 
-                const {
-                    email,
-                    user_password
-                } = req.body;
+            const {
+                email,
+                user_password
+            } = req.body;
 
-            // TODO error ???
+            // TODO catch error ??? connot empliment await style
+            // TODO connot empliment await style
             database.query(QUERY.SELECT_USER_EMAIL, [email], (error, candidate) => {
                 if (candidate[0]) {
                     return res.send(new Response(200, 'OK', `User already exists`));
@@ -135,6 +145,24 @@ class Controller {
 
     async login(req, res) {
         try {
+
+            const {
+                email,
+                user_password
+            } = req.body;
+
+            database.query(QUERY.SELECT_USER_EMAIL, [email], (error, candidate) => {
+                if (!candidate[0]) {
+                    return res.send(new Response(200, 'OK', `No users found`));
+                }
+
+                const validPassword = bcrypt.compareSync(user_password, candidate[0].user_password);
+                if (!validPassword) {
+                    return res.send(new Response(200, 'OK', `Invalid password`));
+                }
+
+                const token = generateAccessToken();
+            })
 
         } catch (error) {
             res.send(new Response(400, 'OK', `Login error`));
