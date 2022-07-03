@@ -9,7 +9,7 @@ import {
 
 
 import pkg from 'jsonwebtoken';
-const jwt = pkg.jwt
+// const jwt = pkg.jwt
 
 const generateAccessToken = (id) => {
     const payload = {
@@ -139,7 +139,7 @@ class Controller {
 
                 // TODO error ???
                 database.query(QUERY.CREATE_USER_PROCEDURE, Object.values(req.body), (error, results) => {
-                    return res.send(new Response(201, 'OK', `User created`));
+                    return res.send(new Response(201, 'Created', `User created`));
                 })
             })
         } catch (error) {
@@ -171,7 +171,7 @@ class Controller {
             })
 
         } catch (error) {
-            res.send(new Response(400, 'OK', `Login error`));
+            res.send(new Response(400, 'BAD_REQUEST', `Login error`));
         }
     }
 

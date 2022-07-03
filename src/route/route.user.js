@@ -3,6 +3,7 @@ import controller from '../controller/user.controller.js';
 import {
     check
 } from 'express-validator';
+import { tokenValidation } from '../auth/token.validation.js'; 
 
 const router = express.Router();
 
@@ -20,7 +21,7 @@ router.post('/register', [
 router.post('/login', controller.login) // .post(createUser);
 
 
-router.get('/users', controller.getUsers) // .get(getUsers)
+router.get('/users', tokenValidation ,controller.getUsers) // .get(getUsers)
 
 
 router.post('/profile/:id') // .get(getU
