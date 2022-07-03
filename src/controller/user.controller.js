@@ -7,11 +7,17 @@ import {
     validationResult
 } from 'express-validator';
 
-import pkg from 'jsonwebtoken'
 
-const {
-    jwt
-} = pkg
+import pkg from 'jsonwebtoken';
+const jwt = pkg.jwt
+
+const generateAccessToken = (id) => {
+    const payload = {
+        id
+    }
+
+    return pkg.sign(payload, process.env.JWT_KEY, {expiresIn: '24h'})
+}
 
 // export const HttpStatus = {
 //     OK: {
@@ -105,9 +111,7 @@ const {
 // };
 // TODO can i use object instead here?
 
-const generateAccessToken = (id) => {
-    const jwt.sign()
-}
+
 class Controller {
 
     async registration(req, res) {
@@ -135,7 +139,7 @@ class Controller {
 
                 // TODO error ???
                 database.query(QUERY.CREATE_USER_PROCEDURE, Object.values(req.body), (error, results) => {
-                    return res.send(new Response(200, 'OK', `login successfully`));
+                    return res.send(new Response(201, 'OK', `User created`));
                 })
             })
         } catch (error) {
@@ -161,7 +165,9 @@ class Controller {
                     return res.send(new Response(200, 'OK', `Invalid password`));
                 }
 
-                const token = generateAccessToken();
+                const token = generateAccessToken(candidate[0].id);
+
+                return res.send(new Response(200, 'OK', `login successfully`, {token}));
             })
 
         } catch (error) {
