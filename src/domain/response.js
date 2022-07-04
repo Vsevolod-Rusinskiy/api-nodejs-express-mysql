@@ -1,4 +1,4 @@
-class Response {
+class ServerCustomResponse {
     constructor(statusCode, httpStatus, message, data){
       this.timeStamp = new Date().toLocaleString();
       this.statusCode = statusCode;
@@ -8,4 +8,4 @@ class Response {
     }
   }
   
-  export default Response;
+  export default ServerCustomResponse;

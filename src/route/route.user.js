@@ -3,7 +3,7 @@ import controller from '../controller/user.controller.js';
 import {
     check
 } from 'express-validator';
-import { tokenValidation } from '../auth/token.validation.js'; 
+import  {tokenValidation}  from '../auth/token.validation.js'; 
 
 const router = express.Router();
 
@@ -18,14 +18,14 @@ router.post('/register', [
 ], controller.registration) // .post(createUser);
 
 
-router.post('/login', controller.login) // .post(createUser);
+router.post('/login', controller.login) 
 
 
-router.get('/users', tokenValidation ,controller.getUsers) // .get(getUsers)
+router.get('/profiles', tokenValidation, controller.getUsers) // .get(getUsers)
 
 
-router.post('/profile/:id') // .get(getU
-router.put('/profile/:id') // .put(updateUser)ser)
+router.post('/profile/:id') // .get(getUser)
+router.put('/profile/:id') // .put(updateUser)
 
 
 

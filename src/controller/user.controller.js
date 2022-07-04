@@ -1,5 +1,5 @@
 import database from '../config/mysql.config.js';
-import Response from '../domain/response.js';
+import ServerCustomResponse from '../domain/response.js';
 import logger from '../util/logger.js';
 import QUERY from '../query/user.query.js';
 import bcrypt from 'bcryptjs';
@@ -111,16 +111,16 @@ const generateAccessToken = (id) => {
 // };
 // TODO can i use object instead here?
 
-
+// 
 class Controller {
-
+// TODO can i use object instead class here?
     async registration(req, res) {
         try {
             logger.info(`${req.method} ${req.originalUrl}, fetching user`);
 
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
-                return res.send(new Response(200, 'OK', `Registration error`, errors));
+                return res.send(new ServerCustomResponse(200, 'OK', `Registration error`, errors));
             }
 
             const {
@@ -132,18 +132,18 @@ class Controller {
             // TODO connot empliment await style
             database.query(QUERY.SELECT_USER_EMAIL, [email], (error, candidate) => {
                 if (candidate[0]) {
-                    return res.send(new Response(200, 'OK', `User already exists`));
+                    return res.send(new ServerCustomResponse(200, 'OK', `User already exists`));
                 }
                 const hashPassword = bcrypt.hashSync(user_password, 7);
                 req.body.user_password = hashPassword;
 
                 // TODO error ???
                 database.query(QUERY.CREATE_USER_PROCEDURE, Object.values(req.body), (error, results) => {
-                    return res.send(new Response(201, 'Created', `User created`));
+                    return res.send(new ServerCustomResponse(201, 'Created', `User created`));
                 })
             })
         } catch (error) {
-            res.send(new Response(400, 'Error', `Registration error`));
+            res.send(new ServerCustomResponse(400, 'Error', `Registration error`));
         }
     }
 
@@ -157,21 +157,21 @@ class Controller {
 
             database.query(QUERY.SELECT_USER_EMAIL, [email], (error, candidate) => {
                 if (!candidate[0]) {
-                    return res.send(new Response(200, 'OK', `No users found`));
+                    return res.send(new ServerCustomResponse(200, 'OK', `No users found`));
                 }
 
                 const validPassword = bcrypt.compareSync(user_password, candidate[0].user_password);
                 if (!validPassword) {
-                    return res.send(new Response(200, 'OK', `Invalid password`));
+                    return res.send(new ServerCustomResponse(200, 'OK', `Invalid password`));
                 }
 
                 const token = generateAccessToken(candidate[0].id);
 
-                return res.send(new Response(200, 'OK', `login successfully`, {token}));
+                return res.send(new ServerCustomResponse(200, 'OK', `login successfully`, {token}));
             })
 
         } catch (error) {
-            res.send(new Response(400, 'BAD_REQUEST', `Login error`));
+            res.send(new ServerCustomResponse(400, 'BAD_REQUEST', `Login error`));
         }
     }
 
@@ -180,15 +180,15 @@ class Controller {
             logger.info(`${req.method} ${req.originalUrl}, fetching users`);
             database.query(QUERY.SELECT_USERS, (error, results) => {
                 if (!results) {
-                    res.send(new Response(200, 'OK', `No users found`));
+                    res.send(new ServerCustomResponse(200, 'OK', `No users found`));
                 } else {
-                    res.send(new Response(200, 'OK', `Users retrieved`, {
+                    res.send(new ServerCustomResponse(200, 'OK', `Users retrieved`, {
                         users: results
                     }));
                 }
             });
         } catch (error) {
-            res.send(new Response(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
+            res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
         }
     }
 }
