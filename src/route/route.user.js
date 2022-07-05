@@ -11,21 +11,21 @@ const router = express.Router();
 // Регистрация пользователя (POST /user/register) // ❗ create user
 // Авторизация пользователя (POST /user/login)
 
-router.post('/register', [
+router.post('/user/register', [
     check('email', 'Email cannot be empty!').notEmpty(),
     check('email', 'Fill in correct email, please!').isEmail(),
     check('user_password', 'Password cannot be empty!').notEmpty()
-], controller.registration) // .post(createUser);
+], controller.registration) 
 
 
-router.post('/login', controller.login) 
+router.post('/user/login', controller.login) 
 
 
 router.get('/profiles', tokenValidation, controller.getUsers) // .get(getUsers)
 
 
-router.post('/profile/:id') // .get(getUser)
-router.put('/profile/:id') // .put(updateUser)
+router.get('/profile/:id', tokenValidation, controller.getUser) // .get(getUser)
+router.put('/profile/:id', tokenValidation, controller.updateUser) // .put(updateUser)
 
 
 

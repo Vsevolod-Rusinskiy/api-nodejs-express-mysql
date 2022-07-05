@@ -16,35 +16,37 @@ const generateAccessToken = (id) => {
         id
     }
 
-    return pkg.sign(payload, process.env.JWT_KEY, {expiresIn: '24h'})
+    return pkg.sign(payload, process.env.JWT_KEY, {
+        expiresIn: '24h'
+    })
 }
 
-// export const HttpStatus = {
-//     OK: {
-//         code: 200,
-//         status: 'OK'
-//     },
-//     CREATED: {
-//         code: 201,
-//         status: 'CREATED'
-//     },
-//     NO_CONTENT: {
-//         code: 204,
-//         status: 'NO_CONTENT'
-//     },
-//     BAD_REQUEST: {
-//         code: 400,
-//         status: 'BAD_REQUEST'
-//     },
-//     NOT_FOUND: {
-//         code: 404,
-//         status: 'NOT_FOUND'
-//     },
-//     INTERNAL_SERVER_ERROR: {
-//         code: 500,
-//         status: 'INTERNAL_SERVER_ERROR'
-//     }
-// };
+export const HttpStatus = {
+    OK: {
+        code: 200,
+        status: 'OK'
+    },
+    CREATED: {
+        code: 201,
+        status: 'CREATED'
+    },
+    NO_CONTENT: {
+        code: 204,
+        status: 'NO_CONTENT'
+    },
+    BAD_REQUEST: {
+        code: 400,
+        status: 'BAD_REQUEST'
+    },
+    NOT_FOUND: {
+        code: 404,
+        status: 'NOT_FOUND'
+    },
+    INTERNAL_SERVER_ERROR: {
+        code: 500,
+        status: 'INTERNAL_SERVER_ERROR'
+    }
+};
 
 
 // export const getUsers = (req, res) => {
@@ -113,7 +115,7 @@ const generateAccessToken = (id) => {
 
 // 
 class Controller {
-// TODO can i use object instead class here?
+    // TODO can i use object instead class here?
     async registration(req, res) {
         try {
             logger.info(`${req.method} ${req.originalUrl}, fetching user`);
@@ -127,6 +129,7 @@ class Controller {
                 email,
                 user_password
             } = req.body;
+            console.log(req.body);
 
             // TODO catch error ??? connot empliment await style
             // TODO connot empliment await style
@@ -137,9 +140,12 @@ class Controller {
                 const hashPassword = bcrypt.hashSync(user_password, 7);
                 req.body.user_password = hashPassword;
 
+                console.log(req.body);
+
                 // TODO error ???
+                // TODO await ???
                 database.query(QUERY.CREATE_USER_PROCEDURE, Object.values(req.body), (error, results) => {
-                    return res.send(new ServerCustomResponse(201, 'Created', `User created`));
+                    return res.send(new ServerCustomResponse(200, 'OK', `User created`, results[0][0]));
                 })
             })
         } catch (error) {
@@ -149,7 +155,6 @@ class Controller {
 
     async login(req, res) {
         try {
-
             const {
                 email,
                 user_password
@@ -159,15 +164,14 @@ class Controller {
                 if (!candidate[0]) {
                     return res.send(new ServerCustomResponse(200, 'OK', `No users found`));
                 }
-
                 const validPassword = bcrypt.compareSync(user_password, candidate[0].user_password);
                 if (!validPassword) {
                     return res.send(new ServerCustomResponse(200, 'OK', `Invalid password`));
                 }
-
                 const token = generateAccessToken(candidate[0].id);
-
-                return res.send(new ServerCustomResponse(200, 'OK', `login successfully`, {token}));
+                return res.send(new ServerCustomResponse(200, 'OK', `login successfully`, {
+                    token
+                }));
             })
 
         } catch (error) {
@@ -191,6 +195,37 @@ class Controller {
             res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
         }
     }
-}
 
+    async getUser(req, res) {
+        logger.info(`${req.method} ${req.originalUrl}, fetching user`);
+        database.query(QUERY.SELECT_USER, [req.params.id], (error, results) => {
+            if (!results[0]) {
+                res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
+            } else {
+                res.send(new ServerCustomResponse(200, 'OK', `User retrieved`, results[0]));
+            }
+        });
+    };
+
+    async updateUser(req, res) {
+        logger.info(`${req.method} ${req.originalUrl}, fetching user`);
+
+        database.query(QUERY.SELECT_USER, [req.params.id], (error, results) => {
+            if (!results[0]) {
+                res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
+            } else {
+                logger.info(`${req.method} ${req.originalUrl}, updating user`);
+                
+                database.query(QUERY.UPDATE_USER, [...Object.values(req.body), req.params.id], (error, results) => {
+                    if (!error) {
+                        res.send(new ServerCustomResponse(200,'OK', `User updated`));
+                    } else {
+                        logger.error(error.message);
+                        res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
+                    }
+                });
+            }
+        });
+    }
+}
 export default new Controller();

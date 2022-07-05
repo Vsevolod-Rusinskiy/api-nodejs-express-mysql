@@ -7,8 +7,8 @@ const {
 
 export const tokenValidation = (req, res, next) => {
 
-    let token = req.get("authorization").slice(7);
     try {
+        let token = req.get("authorization").slice(7);
         if (token) {
             pkg.verify(token, process.env.JWT_KEY, (error, decoded) => {
                 if (error) {
@@ -18,9 +18,8 @@ export const tokenValidation = (req, res, next) => {
                 next();
             });
         }
-
     } catch (error) {
-        return res.send(new ServerCustomResponse(403, 'FORBIDDIEN', `User not authorized`, error.message));
+        return res.send(new ServerCustomResponse(403, 'FORBIDDIEN', `User not authorized`));
     }
 }
 
