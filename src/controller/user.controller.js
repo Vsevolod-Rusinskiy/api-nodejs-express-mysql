@@ -10,7 +10,7 @@ import {
 
 import pkg from 'jsonwebtoken';
 
-// TODO нужен ли вообще
+// TODO нужен ли вообще тут payload
 const generateAccessToken = (id) => {
     const payload = {
         id
@@ -52,9 +52,10 @@ export const HttpStatus = {
 
 
 // TODO can i use object instead here?
+// ASYNC лучше убрать?
 
 class Controller {
-    async registration(req, res) {
+    registration(req, res) {
         try {
             logger.info(`${req.method} ${req.originalUrl}, fetching user`);
 
@@ -67,10 +68,8 @@ class Controller {
                 email,
                 user_password
             } = req.body;
-            console.log(req.body);
 
             // TODO catch error, which error it catchs  ??? 
-            // TODO can i empliment await style or it is ok here?
             // TODO error ???
             database.query(QUERY.SELECT_USER_EMAIL, [email], (error, candidate) => {
                 if (candidate[0]) {
@@ -88,7 +87,7 @@ class Controller {
         }
     }
 
-    async login(req, res) {
+    login(req, res) {
         try {
             logger.info(`${req.method} ${req.originalUrl}, fetching user`);
 
@@ -117,7 +116,7 @@ class Controller {
     }
 
 
-    async getUser(req, res) {
+    getUser(req, res) {
 
         try {
             logger.info(`${req.method} ${req.originalUrl}, fetching user`);
@@ -136,7 +135,7 @@ class Controller {
 
     };
 
-    async updateUser(req, res) {
+    updateUser(req, res) {
         logger.info(`${req.method} ${req.originalUrl}, fetching user`);
 
         database.query(QUERY.SELECT_USER, [req.params.id], (error, results) => {
@@ -157,15 +156,14 @@ class Controller {
         });
     }
 
-    async getUsers(req, res) {
+    getUsers(req, res) {
         const limit = 3
         const page = req.params.page
         const offset = (page - 1) * limit
         // TODO  можем ли с такими переменныйми перекинуть в query
         // есть ли у меня schema?
-        // 
         const usersQuery = `select * from users ORDER BY created_at limit ${limit} OFFSET ${offset}`
-        // TODO почему без function не работает? Что писать вместо второго параметра?
+        // TODO  Что писать вместо второго параметра?
         database.query(usersQuery, function (error, results) {
             if (error) throw error;
             return res.send(new ServerCustomResponse(200, 'OK', `Users retrieved`, results));
