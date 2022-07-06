@@ -215,10 +215,10 @@ class Controller {
                 res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
             } else {
                 logger.info(`${req.method} ${req.originalUrl}, updating user`);
-                
+
                 database.query(QUERY.UPDATE_USER, [...Object.values(req.body), req.params.id], (error, results) => {
                     if (!error) {
-                        res.send(new ServerCustomResponse(200,'OK', `User updated`));
+                        res.send(new ServerCustomResponse(200, 'OK', `User updated`));
                     } else {
                         logger.error(error.message);
                         res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
@@ -226,6 +226,34 @@ class Controller {
                 });
             }
         });
+    }
+
+    async getAllUsers(req, res) {
+        // limit as 20
+        const limit = 3
+        // page number
+        // const page = req.query.page
+        const page = req.params.page
+        // calculate offset
+        const offset = (page - 1) * limit
+        // query for fetching data with page number and offset
+        const usersQuery = `select * from users limit ${limit} OFFSET ${offset}`
+        database.query(usersQuery, function (error, results, fields) {
+            if (error) throw error;
+            // create payload
+            let jsonResult = {
+                'products_page_count': results.length,
+                'page_number': page,
+                'products': results
+            }
+            // create response
+            let myJsonString = JSON.parse(JSON.stringify(jsonResult));
+            res.statusMessage = "Products for page " + page;
+            res.statusCode = 200;
+            return  res.send(myJsonString)
+            // res.json(myJsonString);
+            // res.end();
+        })
     }
 }
 export default new Controller();

@@ -23,6 +23,7 @@ router.post('/user/login', controller.login)
 
 router.get('/profiles', tokenValidation, controller.getUsers) // .get(getUsers)
 
+router.get('/allusers/:page',  controller.getAllUsers) // .get(getAllUsers)
 
 router.get('/profile/:id', tokenValidation, controller.getUser) // .get(getUser)
 router.put('/profile/:id', tokenValidation, controller.updateUser) // .put(updateUser)
