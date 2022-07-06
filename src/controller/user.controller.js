@@ -48,74 +48,12 @@ export const HttpStatus = {
     }
 };
 
+// TODO returns in general ?
 
-// export const getUsers = (req, res) => {
-//     logger.info(`${req.method} ${req.originalUrl}, fetching users`);
-//     database.query(QUERY.SELECT_USERS, (error, results) => {
-//         if (!results) {
-//             res.send(new Response(HttpStatus.OK.code, HttpStatus.OK.status, `No users found`));
-//         } else {
-//             res.send(new Response(HttpStatus.OK.code, HttpStatus.OK.status, `Users retrieved`, {
-//                 users: results
-//             }));
-//         }
-//     });
-// };
 
-// export const createUser = (req, res) => {
-//     logger.info(`${req.method} ${req.originalUrl}, creating user`);
-//     database.query(QUERY.CREATE_USER_PROCEDURE, Object.values(req.body), (error, results) => {
-//         if (!results) {
-//             logger.error(error.message);
-//             res.send(new Response(HttpStatus.INTERNAL_SERVER_ERROR.code, HttpStatus.INTERNAL_SERVER_ERROR.status, `Error occurred`));
-//         } else {
-//             const user = results[0][0];
-//             res.status(HttpStatus.CREATED.code)
-//                 .send(new Response(HttpStatus.CREATED.code, HttpStatus.CREATED.status, `User created`, {
-//                     user
-//                 }));
-//         }
-//     });
-// };
-
-// export const getUser = (req, res) => {
-//     logger.info(`${req.method} ${req.originalUrl}, fetching user`);
-//     database.query(QUERY.SELECT_USER, [req.params.id], (error, results) => {
-//         if (!results[0]) {
-//             res.send(new Response(HttpStatus.NOT_FOUND.code, HttpStatus.NOT_FOUND.status, `User by id ${req.params.id} was not found`));
-//         } else {
-//             res.send(new Response(HttpStatus.OK.code, HttpStatus.OK.status, `User retrieved`, results[0]));
-//         }
-//     });
-// };
-
-// export const updateUser = (req, res) => {
-//     logger.info(`${req.method} ${req.originalUrl}, fetching user`);
-
-//     database.query(QUERY.SELECT_USER, [req.params.id], (error, results) => {
-//         if (!results[0]) {
-//             res.send(new Response(HttpStatus.NOT_FOUND.code, HttpStatus.NOT_FOUND.status, `User by id ${req.params.id} was not found`));
-//         } else {
-//             logger.info(`${req.method} ${req.originalUrl}, updating user`);
-//             database.query(QUERY.UPDATE_USER, [...Object.values(req.body), req.params.id], (error, results) => {
-//                 if (!error) {
-//                     res.send(new Response(HttpStatus.OK.code, HttpStatus.OK.status, `User updated`, {
-//                         id: req.params.id,
-//                         ...req.body
-//                     }));
-//                 } else {
-//                     logger.error(error.message);
-//                     res.send(new Response(HttpStatus.INTERNAL_SERVER_ERROR.code, HttpStatus.INTERNAL_SERVER_ERROR.status, `Error occurred`));
-//                 }
-//             });
-//         }
-//     });
-// };
 // TODO can i use object instead here?
 
-// 
 class Controller {
-    // TODO can i use object instead class here?
     async registration(req, res) {
         try {
             logger.info(`${req.method} ${req.originalUrl}, fetching user`);
@@ -131,8 +69,9 @@ class Controller {
             } = req.body;
             console.log(req.body);
 
-            // TODO catch error ??? connot empliment await style
-            // TODO connot empliment await style
+            // TODO catch error, which error it catchs  ??? 
+            // TODO can i empliment await style or it is ok here?
+            // TODO error ???
             database.query(QUERY.SELECT_USER_EMAIL, [email], (error, candidate) => {
                 if (candidate[0]) {
                     return res.send(new ServerCustomResponse(200, 'OK', `User already exists`));
@@ -142,8 +81,6 @@ class Controller {
 
                 console.log(req.body);
 
-                // TODO error ???
-                // TODO await ???
                 database.query(QUERY.CREATE_USER_PROCEDURE, Object.values(req.body), (error, results) => {
                     return res.send(new ServerCustomResponse(200, 'OK', `User created`, results[0][0]));
                 })
@@ -155,6 +92,8 @@ class Controller {
 
     async login(req, res) {
         try {
+            logger.info(`${req.method} ${req.originalUrl}, fetching user`);
+
             const {
                 email,
                 user_password
@@ -179,32 +118,24 @@ class Controller {
         }
     }
 
-    async getUsers(req, res) {
+
+    async getUser(req, res) {
+
         try {
-            logger.info(`${req.method} ${req.originalUrl}, fetching users`);
-            database.query(QUERY.SELECT_USERS, (error, results) => {
-                if (!results) {
-                    res.send(new ServerCustomResponse(200, 'OK', `No users found`));
+            logger.info(`${req.method} ${req.originalUrl}, fetching user`);
+            database.query(QUERY.SELECT_USER, [req.params.id], (error, results) => {
+                if (!results[0]) {
+                    res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
+
+                    // TODO else замена ошибки?
                 } else {
-                    res.send(new ServerCustomResponse(200, 'OK', `Users retrieved`, {
-                        users: results
-                    }));
+                    res.send(new ServerCustomResponse(200, 'OK', `User retrieved`, results[0]));
                 }
             });
         } catch (error) {
-            res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
+            // TODO что - то с базой или интернетом?
         }
-    }
 
-    async getUser(req, res) {
-        logger.info(`${req.method} ${req.originalUrl}, fetching user`);
-        database.query(QUERY.SELECT_USER, [req.params.id], (error, results) => {
-            if (!results[0]) {
-                res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
-            } else {
-                res.send(new ServerCustomResponse(200, 'OK', `User retrieved`, results[0]));
-            }
-        });
     };
 
     async updateUser(req, res) {
@@ -228,31 +159,18 @@ class Controller {
         });
     }
 
-    async getAllUsers(req, res) {
-        // limit as 20
+    async getUsers(req, res) {
         const limit = 3
-        // page number
-        // const page = req.query.page
         const page = req.params.page
-        // calculate offset
         const offset = (page - 1) * limit
-        // query for fetching data with page number and offset
+        // TODO  можем ли с такими переменныйми перекинуть в query
+        // есть ли у меня schema?
+        // 
         const usersQuery = `select * from users limit ${limit} OFFSET ${offset}`
-        database.query(usersQuery, function (error, results, fields) {
+        // TODO почему без function не работает? Что писать вместо второго параметра?
+        database.query(usersQuery, function (error, results) {
             if (error) throw error;
-            // create payload
-            let jsonResult = {
-                'products_page_count': results.length,
-                'page_number': page,
-                'products': results
-            }
-            // create response
-            let myJsonString = JSON.parse(JSON.stringify(jsonResult));
-            res.statusMessage = "Products for page " + page;
-            res.statusCode = 200;
-            return  res.send(myJsonString)
-            // res.json(myJsonString);
-            // res.end();
+            return res.send(new ServerCustomResponse(200, 'OK', `Users retrieved`, results));
         })
     }
 }
