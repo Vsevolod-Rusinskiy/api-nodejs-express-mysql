@@ -79,8 +79,6 @@ class Controller {
                 const hashPassword = bcrypt.hashSync(user_password, 7);
                 req.body.user_password = hashPassword;
 
-                console.log(req.body);
-
                 database.query(QUERY.CREATE_USER_PROCEDURE, Object.values(req.body), (error, results) => {
                     return res.send(new ServerCustomResponse(200, 'OK', `User created`, results[0][0]));
                 })
