@@ -7,9 +7,6 @@ import  {tokenValidation}  from '../auth/token.validation.js';
 
 const router = express.Router();
 
-// 2 
-// Регистрация пользователя (POST /user/register) // ❗ create user
-// Авторизация пользователя (POST /user/login)
 
 router.post('/user/register', [
     check('email', 'Email cannot be empty!').notEmpty(),
@@ -25,9 +22,6 @@ router.get('/profiles/:page', tokenValidation, controller.getUsers) // .get(getU
 
 router.get('/profile/:id', tokenValidation, controller.getUser) // .get(getUser)
 router.put('/profile/:id', tokenValidation, controller.updateUser) // .put(updateUser)
-
-
-
 
 
 

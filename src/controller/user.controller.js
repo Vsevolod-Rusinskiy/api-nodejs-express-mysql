@@ -9,8 +9,8 @@ import {
 
 
 import pkg from 'jsonwebtoken';
-// const jwt = pkg.jwt
 
+// TODO нужен ли вообще
 const generateAccessToken = (id) => {
     const payload = {
         id
@@ -166,7 +166,7 @@ class Controller {
         // TODO  можем ли с такими переменныйми перекинуть в query
         // есть ли у меня schema?
         // 
-        const usersQuery = `select * from users limit ${limit} OFFSET ${offset}`
+        const usersQuery = `select * from users ORDER BY created_at limit ${limit} OFFSET ${offset}`
         // TODO почему без function не работает? Что писать вместо второго параметра?
         database.query(usersQuery, function (error, results) {
             if (error) throw error;
