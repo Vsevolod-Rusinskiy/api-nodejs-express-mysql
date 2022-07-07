@@ -6,8 +6,13 @@
     <title>Document</title>
 </head>
 <body>
-    hi
-    <button>Push</button>
+    <form action="http://127.0.0.1:5500/file" method="POST" id="add__form" enctype="multipart/form-data">
+        <h1>Добавление файла:</h1>
+        <label for="user_photo">Добавить фото</label>
+        <input type="file" id="user_photo" name="user_photo" ><br>
+        <button type="submit" style="background: green;color: white; margin: 5px 0;">PUSH</button><br>
+        <input type="submit" value="SEND" style="background: green;color: white"/>
+    </form>    
     <script src="./script.js"></script>
 </body>
 </html>

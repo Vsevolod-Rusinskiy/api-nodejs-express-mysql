@@ -118,20 +118,23 @@ class Controller {
 
     getUser(req, res) {
 
-        try {
-            logger.info(`${req.method} ${req.originalUrl}, fetching user`);
-            database.query(QUERY.SELECT_USER, [req.params.id], (error, results) => {
-                if (!results[0]) {
-                    res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
+        // res.sendFile(__dirname + '/index.html')
+        res.sendFile('/public/index.html')
 
-                    // TODO else замена ошибки?
-                } else {
-                    res.send(new ServerCustomResponse(200, 'OK', `User retrieved`, results[0]));
-                }
-            });
-        } catch (error) {
-            // TODO что - то с базой или интернетом?
-        }
+        // try {
+        //     logger.info(`${req.method} ${req.originalUrl}, fetching user`);
+        //     database.query(QUERY.SELECT_USER, [req.params.id], (error, results) => {
+        //         if (!results[0]) {
+        //             res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
+
+        //             // TODO else замена ошибки?
+        //         } else {
+        //             res.send(new ServerCustomResponse(200, 'OK', `User retrieved`, results[0]));
+        //         }
+        //     });
+        // } catch (error) {
+        //     // TODO что - то с базой или интернетом?
+        // }
 
     };
 
@@ -169,5 +172,14 @@ class Controller {
             return res.send(new ServerCustomResponse(200, 'OK', `Users retrieved`, results));
         })
     }
+
+    uploadUserPhoto(req, res, next) {
+        let filedata = req.file;
+        console.log(filedata);
+        if (!filedata)
+            res.send("Ошибка при загрузке файла");
+        else
+            res.send("Файл загружен");
+    };
 }
 export default new Controller();
