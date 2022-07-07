@@ -26,6 +26,7 @@ app.use(express.static(__dirname + "/public"));
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
+        console.log(1);
         cb(null, 'public/img/photo/')
     },
     filename: function (req, file, cb) {
