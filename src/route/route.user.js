@@ -23,9 +23,11 @@ router.get('/profiles/:page', tokenValidation, controller.getUsers) // .get(getU
 
 router.get('/profile/:id', tokenValidation, controller.getUser) // .get(getUser)
 router.put('/profile/:id', tokenValidation, controller.updateUser) // .put(updateUser)
+
+// TODO add token
 router.post('/file',  controller.uploadUserPhoto) // .put(updateUser)
 
-router.get('/upload-user-photo', controller.getUser) // .get(getUser)
+// router.get('/upload-user-photo', controller.getUser) // .get(getUser)
 
 
 
