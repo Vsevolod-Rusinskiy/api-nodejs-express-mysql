@@ -24,7 +24,7 @@ const __dirname = path.resolve();
 app.use(express.static(__dirname + "/public"));
 
 // is it better to use defenite route to avoid overloading? 
-app.use(multer({dest:"uploads"}).single("filedata"));
+app.use(multer({dest:"public/uploads"}).single("filedata"));
 
 
 

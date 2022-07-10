@@ -174,13 +174,6 @@ class Controller {
     }
 
     uploadUserPhoto(req, res, next) {
-        // let filedata = req.file;
-        // console.log(filedata);
-        // if (!filedata)
-        //     res.send("Ошибка при загрузке файла");
-        // else
-        //     res.send("Файл загружен");
-
         let filedata = req.file;
         console.log(filedata);
         if(!filedata)
