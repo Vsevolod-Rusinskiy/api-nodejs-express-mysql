@@ -11,7 +11,7 @@ import util from 'util';
 
 
 import pkg from 'jsonwebtoken';
-
+  
 // TODO нужен ли вообще тут payload
 const generateAccessToken = (id) => {
     const payload = {
