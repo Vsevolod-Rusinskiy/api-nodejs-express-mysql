@@ -7,6 +7,8 @@ import {
     validationResult
 } from 'express-validator';
 
+import util from 'util';
+
 
 import pkg from 'jsonwebtoken';
 
@@ -54,11 +56,13 @@ export const HttpStatus = {
 // TODO can i use object instead here?
 // ASYNC лучше убрать?
 
+// 
+
 class Controller {
     registration(req, res) {
-        try {
-            logger.info(`${req.method} ${req.originalUrl}, fetching user`);
+        logger.info(`${req.method} ${req.originalUrl}, fetching user`);
 
+        try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
                 return res.send(new ServerCustomResponse(200, 'OK', `Registration error`, errors));
@@ -82,6 +86,8 @@ class Controller {
                     return res.send(new ServerCustomResponse(200, 'OK', `User created`, results[0][0]));
                 })
             })
+
+            // await database.query(QUERY.SELECT_USER_EMAIL, [email])
         } catch (error) {
             res.send(new ServerCustomResponse(400, 'Error', `Registration error`));
         }
@@ -117,22 +123,55 @@ class Controller {
 
 
     getUser(req, res) {
-        try {
-            logger.info(`${req.method} ${req.originalUrl}, fetching user`);
+        return new Promise((resolve, reject) => {
             database.query(QUERY.SELECT_USER, [req.params.id], (error, results) => {
                 if (!results[0]) {
                     res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
-
-                    // TODO else замена ошибки?
-                } else {
-                    res.send(new ServerCustomResponse(200, 'OK', `User retrieved`, results[0]));
+                    return reject();
                 }
+                res.send(new ServerCustomResponse(200, 'OK', `User retrieved`, results[0]));
+                return resolve();
             });
-        } catch (error) {
-            // TODO что - то с базой или интернетом?
-        }
+        });
+
+
+        // try {
+        //     logger.info(`${req.method} ${req.originalUrl}, fetching user`);
+        //     database.query(QUERY.SELECT_USER, [req.params.id], (error, results) => {
+        //         if (!results[0]) {
+        //             res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
+
+        //             // TODO else замена ошибки?
+        //         } else {
+        //             res.send(new ServerCustomResponse(200, 'OK', `User retrieved`, results[0]));
+        //         }
+        //     });
+        // } catch (error) {
+        //     // TODO что - то с базой или интернетом?
+        // }
 
     };
+
+
+    // async getUser1(req, res) {
+    //     try {
+    //         logger.info(`${req.method} ${req.originalUrl}, fetching user`);
+    //         database.query(QUERY.SELECT_USER, [req.params.id], (error, results) => {
+    //             if (!results[0]) {
+    //                 res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
+
+    //                 // TODO else замена ошибки?
+    //             } else {
+    //                 res.send(new ServerCustomResponse(200, 'OK', `User retrieved`, results[0]));
+    //             }
+    //         });
+    //     } catch (error) {
+    //         // TODO что - то с базой или интернетом?
+    //     }
+
+    // };
+
+
 
     updateUser(req, res) {
         logger.info(`${req.method} ${req.originalUrl}, fetching user`);
@@ -172,7 +211,7 @@ class Controller {
     uploadUserPhoto(req, res, next) {
         let filedata = req.file;
         console.log(filedata);
-        if(!filedata)
+        if (!filedata)
             res.send("Ошибка при загрузке файла");
         else
             res.send("Файл загружен");
