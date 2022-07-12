@@ -27,7 +27,6 @@ router.put('/profile/:id', tokenValidation, controller.updateUser) // .put(updat
 // TODO add token
 router.post('/file',  controller.uploadUserPhoto) // .put(updateUser)
 
-// router.get('/upload-user-photo', controller.getUser) // .get(getUser)
 
 
 
