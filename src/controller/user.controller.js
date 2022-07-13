@@ -58,39 +58,39 @@ export const HttpStatus = {
 // 
 
 class Controller {
-    registration(req, res) {
-        logger.info(`${req.method} ${req.originalUrl}, fetching user`);
+    // registration(req, res) {
+    //     logger.info(`${req.method} ${req.originalUrl}, fetching user`);
 
-        try {
-            const errors = validationResult(req);
-            if (!errors.isEmpty()) {
-                return res.send(new ServerCustomResponse(200, 'OK', `Registration error`, errors));
-            }
+    //     try {
+    //         const errors = validationResult(req);
+    //         if (!errors.isEmpty()) {
+    //             return res.send(new ServerCustomResponse(200, 'OK', `Registration error`, errors));
+    //         }
 
-            const {
-                email,
-                user_password
-            } = req.body;
+    //         const {
+    //             email,
+    //             user_password
+    //         } = req.body;
 
-            // TODO catch error, which error it catchs  ??? 
-            // TODO error ???
-            database.query(QUERY.SELECT_USER_EMAIL, [email], (error, candidate) => {
-                if (candidate[0]) {
-                    return res.send(new ServerCustomResponse(200, 'OK', `User already exists`));
-                }
-                const hashPassword = bcrypt.hashSync(user_password, 7);
-                req.body.user_password = hashPassword;
+    //         // TODO catch error, which error it catchs  ??? 
+    //         // TODO error ???
+    //         database.query(QUERY.SELECT_USER_EMAIL, [email], (error, candidate) => {
+    //             if (candidate[0]) {
+    //                 return res.send(new ServerCustomResponse(200, 'OK', `User already exists`));
+    //             }
+    //             const hashPassword = bcrypt.hashSync(user_password, 7);
+    //             req.body.user_password = hashPassword;
 
-                database.query(QUERY.CREATE_USER_PROCEDURE, Object.values(req.body), (error, results) => {
-                    return res.send(new ServerCustomResponse(200, 'OK', `User created`, results[0][0]));
-                })
-            })
+    //             database.query(QUERY.CREATE_USER_PROCEDURE, Object.values(req.body), (error, results) => {
+    //                 return res.send(new ServerCustomResponse(200, 'OK', `User created`, results[0][0]));
+    //             })
+    //         })
 
-            // await database.query(QUERY.SELECT_USER_EMAIL, [email])
-        } catch (error) {
-            res.send(new ServerCustomResponse(400, 'Error', `Registration error`));
-        }
-    }
+    //         // await database.query(QUERY.SELECT_USER_EMAIL, [email])
+    //     } catch (error) {
+    //         res.send(new ServerCustomResponse(400, 'Error', `Registration error`));
+    //     }
+    // }
 
     login(req, res) {
         try {

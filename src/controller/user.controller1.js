@@ -50,12 +50,12 @@ const registrationPromise = (req, res) => {
     logger.info(`${req.method} ${req.originalUrl}, fetching user`);
 
     return new Promise((resolve, reject) => {
-        // const errors = validationResult(req);
-        // if (!errors.isEmpty()) {
-        //     res.send(new ServerCustomResponse(200, 'OK', `Registration error`, errors));
-        //     // TODO what message send server ? / reject or resolve?
-        //     return resolve();
-        // }
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            res.send(new ServerCustomResponse(200, 'OK', `Registration error`, errors));
+            // TODO what message send server ? / reject or resolve?
+            return resolve();
+        }
 
         const {
             email,
@@ -75,7 +75,7 @@ const registrationPromise = (req, res) => {
             const hashPassword = bcrypt.hashSync(user_password, 7);
             req.body.user_password = hashPassword;
 
-            // TODO is it norm  
+            // TODO is it norm  query in query ?
             database.query(QUERY.CREATE_USER_PROCEDURE, Object.values(req.body), (error, results) => {
                 if (error) {
                     res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
@@ -90,6 +90,42 @@ const registrationPromise = (req, res) => {
     })
 }
 
+const loginPromise = (req, res) => {
+    logger.info(`${req.method} ${req.originalUrl}, fetching user`);
+
+    return new Promise((resolve, reject) => {
+        const {
+            email,
+            user_password
+        } = req.body;
+
+        database.query(QUERY.SELECT_USER_EMAIL, [email], (error, candidate) => {
+            if (error) {
+                res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
+                return reject(error);
+            }
+
+            if (!candidate[0]) {
+                res.send(new ServerCustomResponse(200, 'OK', `No users found` ));
+                return reject(`No users found`);
+            }
+            const validPassword = bcrypt.compareSync(user_password, candidate[0].user_password);
+            if (!validPassword) {
+                res.send(new ServerCustomResponse(200, 'OK', `Invalid password`));
+                return reject(`Invalid password`)
+            }
+
+            const token = generateAccessToken(candidate[0].id);
+
+            if (candidate[0]) {
+                res.send(new ServerCustomResponse(200, 'OK', `login successfully`, {
+                    token
+                }));
+                return resolve();
+            }
+        })
+    })
+}
 
 
 const getUserPromise = (req, res) => {
@@ -115,13 +151,21 @@ const Controller1 = {
         try {
             await getUserPromise(req, res);
         } catch (error) {
-            console.log('>>>',error);
+            console.log('>>>', error);
         }
     },
 
     registration: async (req, res) => {
         try {
             await registrationPromise(req, res)
+        } catch (error) {
+            console.log(error);
+        }
+    },
+
+    login: async (req, res) => {
+        try {
+            await loginPromise(req, res)
         } catch (error) {
             console.log(error);
         }

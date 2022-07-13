@@ -17,7 +17,7 @@ router.post('/user/register', [
 ], controller1.registration) 
 
 
-router.post('/user/login', controller.login) 
+router.post('/user/login', controller1.login) 
 
 router.get('/profiles/:page', tokenValidation, controller.getUsers) // .get(getUsers)
 
