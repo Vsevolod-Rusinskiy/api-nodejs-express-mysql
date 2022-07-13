@@ -14,21 +14,19 @@ router.post('/user/register', [
     check('email', 'Email cannot be empty!').notEmpty(),
     check('email', 'Fill in correct email, please!').isEmail(),
     check('user_password', 'Password cannot be empty!').notEmpty()
-], controller1.registration) 
+], controller1.registration) // 111
 
 
-router.post('/user/login', controller1.login) 
+router.post('/user/login', controller1.login) // 111
 
-router.get('/profiles/:page', tokenValidation, controller.getUsers) // .get(getUsers)
+router.get('/profiles/:page', tokenValidation, controller1.getUsers) // 111
 
+router.get('/profile/:id', tokenValidation, controller1.getUser) // 111
 
-router.get('/profile/:id', tokenValidation, controller1.getUser) // .get(getUser)
-
-// router.get('/profile/:id', tokenValidation, controller.getUser) // .get(getUser)
-router.put('/profile/:id', tokenValidation, controller.updateUser) // .put(updateUser)
+router.put('/profile/:id', tokenValidation, controller1.updateUser) // 111
 
 // TODO add token
-router.post('/file',  controller.uploadUserPhoto) // .put(updateUser)
+router.post('/file',  controller1.uploadUserPhoto) // .put(updateUser) //111
 
 
 

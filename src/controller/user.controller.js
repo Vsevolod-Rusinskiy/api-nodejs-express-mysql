@@ -92,33 +92,33 @@ class Controller {
     //     }
     // }
 
-    login(req, res) {
-        try {
-            logger.info(`${req.method} ${req.originalUrl}, fetching user`);
+    // login(req, res) {
+    //     try {
+    //         logger.info(`${req.method} ${req.originalUrl}, fetching user`);
 
-            const {
-                email,
-                user_password
-            } = req.body;
+    //         const {
+    //             email,
+    //             user_password
+    //         } = req.body;
 
-            database.query(QUERY.SELECT_USER_EMAIL, [email], (error, candidate) => {
-                if (!candidate[0]) {
-                    return res.send(new ServerCustomResponse(200, 'OK', `No users found`));
-                }
-                const validPassword = bcrypt.compareSync(user_password, candidate[0].user_password);
-                if (!validPassword) {
-                    return res.send(new ServerCustomResponse(200, 'OK', `Invalid password`));
-                }
-                const token = generateAccessToken(candidate[0].id);
-                return res.send(new ServerCustomResponse(200, 'OK', `login successfully`, {
-                    token
-                }));
-            })
+    //         database.query(QUERY.SELECT_USER_EMAIL, [email], (error, candidate) => {
+    //             if (!candidate[0]) {
+    //                 return res.send(new ServerCustomResponse(200, 'OK', `No users found`));
+    //             }
+    //             const validPassword = bcrypt.compareSync(user_password, candidate[0].user_password);
+    //             if (!validPassword) {
+    //                 return res.send(new ServerCustomResponse(200, 'OK', `Invalid password`));
+    //             }
+    //             const token = generateAccessToken(candidate[0].id);
+    //             return res.send(new ServerCustomResponse(200, 'OK', `login successfully`, {
+    //                 token
+    //             }));
+    //         })
 
-        } catch (error) {
-            res.send(new ServerCustomResponse(400, 'BAD_REQUEST', `Login error`));
-        }
-    }
+    //     } catch (error) {
+    //         res.send(new ServerCustomResponse(400, 'BAD_REQUEST', `Login error`));
+    //     }
+    // }
 
 
 

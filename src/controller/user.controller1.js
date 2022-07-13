@@ -45,6 +45,10 @@ export const HttpStatus = {
         status: 'INTERNAL_SERVER_ERROR'
     }
 };
+//TODO то что у меня то result то condidate это хуево или норм?
+// TODO check 'fetching user'
+
+
 
 const registrationPromise = (req, res) => {
     logger.info(`${req.method} ${req.originalUrl}, fetching user`);
@@ -53,7 +57,6 @@ const registrationPromise = (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             res.send(new ServerCustomResponse(200, 'OK', `Registration error`, errors));
-            // TODO what message send server ? / reject or resolve?
             return resolve();
         }
 
@@ -106,10 +109,12 @@ const loginPromise = (req, res) => {
             }
 
             if (!candidate[0]) {
-                res.send(new ServerCustomResponse(200, 'OK', `No users found` ));
+                res.send(new ServerCustomResponse(200, 'OK', `No users found`));
                 return reject(`No users found`);
             }
+
             const validPassword = bcrypt.compareSync(user_password, candidate[0].user_password);
+
             if (!validPassword) {
                 res.send(new ServerCustomResponse(200, 'OK', `Invalid password`));
                 return reject(`Invalid password`)
@@ -127,10 +132,63 @@ const loginPromise = (req, res) => {
     })
 }
 
-
-const getUserPromise = (req, res) => {
-    logger.info(`${req.method} ${req.originalUrl}, fetching user`);
+function makeQuery(query, params) {
     return new Promise((resolve, reject) => {
+        database.query(query, params, (error, results) => {
+            if (error) {
+                reject(error);
+            }
+            resolve(results);
+        })
+    });
+}
+
+
+const getUserPromise = async (req, res) => {
+    logger.info(`${req.method} ${req.originalUrl}, fetching user`);
+    try {
+        const results = await makeQuery(QUERY.SELECT_USER, [req.params.id]);
+        if (!results[0]) {
+            return res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
+        }
+        if (results[0]) {
+            return res.send(new ServerCustomResponse(200, 'OK', `User retrieved`, results[0]));
+        }
+    } catch {
+        res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
+    }
+}
+
+const getUsersPromise = (req, res) => {
+    logger.info(`${req.method} ${req.originalUrl}, fetching user`);
+
+    return new Promise((resolve, reject) => {
+        const limit = 3
+        const page = req.params.page
+        const offset = (page - 1) * limit
+        // TODO  можем ли с такими переменныйми перекинуть в query
+        // есть ли у меня schema?
+        const usersQuery = `select * from users ORDER BY created_at limit ${limit} OFFSET ${offset}`
+
+        database.query(usersQuery, function (error, results) {
+            if (error) {
+                res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
+                return reject(error);
+            }
+            // if (error) throw error;
+
+            if (results) {
+                res.send(new ServerCustomResponse(200, 'OK', `Users retrieved`, results));
+                return resolve();
+            }
+        })
+    });
+}
+const updateUserPromise = (req, res) => {
+    logger.info(`${req.method} ${req.originalUrl}, fetching user`);
+
+    return new Promise((resolve, reject) => {
+
         database.query(QUERY.SELECT_USER, [req.params.id], (error, results) => {
             if (error) {
                 res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
@@ -138,11 +196,47 @@ const getUserPromise = (req, res) => {
             }
             if (!results[0]) {
                 res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
-                return reject(`User by id ${req.params.id} was not found`);
+                return reject(`User by id ${req.params.id} was not found`)
             }
-            res.send(new ServerCustomResponse(200, 'OK', `User retrieved`, results[0]));
-            return resolve();
+            //  else {
+
+            if (results[0]) {
+                logger.info(`${req.method} ${req.originalUrl}, updating user`);
+                // TODO это норм что results не обработали? по логике мы уже  в нем
+                database.query(QUERY.UPDATE_USER, [...Object.values(req.body), req.params.id], (error, results) => {
+                    if (error) {
+                        res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
+                        return reject(error);
+                    }
+
+                    res.send(new ServerCustomResponse(200, 'OK', `User updated`));
+                    return resolve()
+                });
+            }
+
+
+            // }
         });
+
+    });
+}
+
+const uploadUserPhotoPromise = (req, res) => {
+    logger.info(`${req.method} ${req.originalUrl}, uploding file...`);
+    // TODO ограничения 10mb + путь к файлу в базу
+    return new Promise((resolve, reject) => {
+        let filedata = req.file;
+        if (!filedata) {
+            res.send(new ServerCustomResponse(400, 'CLIENT_ERROR', `File loading error`));
+            return reject(`File loading error`);
+            // res.send("Ошибка при загрузке файла");
+        }
+        // TODO так пивать в общем стиле? или добавить else?
+        if (filedata) {
+            res.send(new ServerCustomResponse(200, 'OK', `File loaded`));
+            return resolve();
+            // res.send("Файл загружен");
+        }
     });
 }
 
@@ -151,7 +245,7 @@ const Controller1 = {
         try {
             await getUserPromise(req, res);
         } catch (error) {
-            console.log('>>>', error);
+            console.log(error);
         }
     },
 
@@ -166,6 +260,30 @@ const Controller1 = {
     login: async (req, res) => {
         try {
             await loginPromise(req, res)
+        } catch (error) {
+            console.log(error);
+        }
+    },
+
+    getUsers: async (req, res) => {
+        try {
+            await getUsersPromise(req, res)
+        } catch (error) {
+            console.log(error);
+        }
+    },
+
+    updateUser: async (req, res) => {
+        try {
+            await updateUserPromise(req, res)
+        } catch (error) {
+            console.log(error);
+        }
+    },
+
+    uploadUserPhoto: async (req, res) => {
+        try {
+            await uploadUserPhotoPromise(req, res)
         } catch (error) {
             console.log(error);
         }
