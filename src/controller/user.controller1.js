@@ -48,50 +48,68 @@ export const HttpStatus = {
 //TODO то что у меня то result то condidate это хуево или норм?
 // TODO check 'fetching user'
 
+function makeQuery(query, params) {
+    return new Promise((resolve, reject) => {
+        database.query(query, params, (error, results) => {
+            if (error) {
+                reject(error);
+            }
+            resolve(results);
+        })
+    });
+}
 
-
-const registrationPromise = (req, res) => {
+const registrationPromise = async (req, res) => {
     logger.info(`${req.method} ${req.originalUrl}, fetching user`);
 
-    return new Promise((resolve, reject) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            res.send(new ServerCustomResponse(200, 'OK', `Registration error`, errors));
-            return resolve();
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.send(new ServerCustomResponse(200, 'OK', `Registration error`, errors));
+    }
+
+    const {
+        email,
+        user_password
+    } = req.body;
+
+    try {
+        const candidate = await makeQuery(QUERY.SELECT_USER_EMAIL, [email]);
+
+        if (candidate[0]) {
+            return res.send(new ServerCustomResponse(200, 'OK', `User already exists`));
         }
 
-        const {
-            email,
-            user_password
-        } = req.body;
+        const hashPassword = bcrypt.hashSync(user_password, 7);
+        req.body.user_password = hashPassword;
 
-        database.query(QUERY.SELECT_USER_EMAIL, [email], (error, candidate) => {
-            if (error) {
-                res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
-                return reject(error);
-            }
-            if (candidate[0]) {
-                res.send(new ServerCustomResponse(200, 'OK', `User already exists`));
-                return resolve();
-            }
+        const results = await makeQuery(QUERY.CREATE_USER_PROCEDURE, Object.values(req.body));
 
-            const hashPassword = bcrypt.hashSync(user_password, 7);
-            req.body.user_password = hashPassword;
+        if (results[0][0]) {
+            return res.send(new ServerCustomResponse(200, 'OK', `User created`, results[0][0]));
+        }
 
-            // TODO is it norm  query in query ?
-            database.query(QUERY.CREATE_USER_PROCEDURE, Object.values(req.body), (error, results) => {
-                if (error) {
-                    res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
-                    return reject(error);
-                }
-                if (results[0][0]) {
-                    res.send(new ServerCustomResponse(200, 'OK', `User created`, results[0][0]));
-                    return resolve();
-                }
-            })
-        })
-    })
+    } catch (error) {
+        res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
+
+    }
 }
+
+
+
+// TODO is it norm  query in query ?
+// database.query(QUERY.CREATE_USER_PROCEDURE, Object.values(req.body), (error, results) => {
+//     if (error) {
+//         res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
+//         // return reject(error);
+//     }
+//     if (results[0][0]) {
+//         res.send(new ServerCustomResponse(200, 'OK', `User created`, results[0][0]));
+//         // return resolve();
+//     }
+// })
+// })
+// })
+
 
 const loginPromise = (req, res) => {
     logger.info(`${req.method} ${req.originalUrl}, fetching user`);
@@ -132,16 +150,7 @@ const loginPromise = (req, res) => {
     })
 }
 
-function makeQuery(query, params) {
-    return new Promise((resolve, reject) => {
-        database.query(query, params, (error, results) => {
-            if (error) {
-                reject(error);
-            }
-            resolve(results);
-        })
-    });
-}
+
 
 
 const getUserPromise = async (req, res) => {
