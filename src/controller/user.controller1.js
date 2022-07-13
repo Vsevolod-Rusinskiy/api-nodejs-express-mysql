@@ -47,6 +47,7 @@ export const HttpStatus = {
 };
 //TODO то что у меня то result то condidate это хуево или норм?
 // TODO check 'fetching user'
+// TODO check funcname
 
 function makeQuery(query, params) {
     return new Promise((resolve, reject) => {
@@ -95,20 +96,6 @@ const registrationPromise = async (req, res) => {
 }
 
 
-
-// TODO is it norm  query in query ?
-// database.query(QUERY.CREATE_USER_PROCEDURE, Object.values(req.body), (error, results) => {
-//     if (error) {
-//         res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
-//         // return reject(error);
-//     }
-//     if (results[0][0]) {
-//         res.send(new ServerCustomResponse(200, 'OK', `User created`, results[0][0]));
-//         // return resolve();
-//     }
-// })
-// })
-// })
 
 
 const loginPromise = (req, res) => {
@@ -168,30 +155,39 @@ const getUserPromise = async (req, res) => {
     }
 }
 
-const getUsersPromise = (req, res) => {
+const getUsersPromise = async (req, res) => {
+
+
     logger.info(`${req.method} ${req.originalUrl}, fetching user`);
 
-    return new Promise((resolve, reject) => {
-        const limit = 3
-        const page = req.params.page
-        const offset = (page - 1) * limit
-        // TODO  можем ли с такими переменныйми перекинуть в query
-        // есть ли у меня schema?
-        const usersQuery = `select * from users ORDER BY created_at limit ${limit} OFFSET ${offset}`
+    // return new Promise((resolve, reject) => {
+    const limit = 10
+    const page = req.params.page
+    const offset = (page - 1) * 10
+    // TODO  можем ли с такими переменныйми перекинуть в query
 
-        database.query(usersQuery, function (error, results) {
-            if (error) {
-                res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
-                return reject(error);
-            }
-            // if (error) throw error;
+    try {
+        const results = await makeQuery(QUERY.SELECT_USERS + offset);
+        if (results) {
+           return res.send(new ServerCustomResponse(200, 'OK', `Users retrieved`, results));
+        }
+    } catch {
+        res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
+    }
 
-            if (results) {
-                res.send(new ServerCustomResponse(200, 'OK', `Users retrieved`, results));
-                return resolve();
-            }
-        })
-    });
+    // database.query(QUERY.SELECT_USERS + offset, function (error, results) {
+    // if (error) {
+    // res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
+    // return reject(error);
+    // }
+    // if (error) throw error;
+
+    // if (results) {
+    //     res.send(new ServerCustomResponse(200, 'OK', `Users retrieved`, results));
+    //     // return resolve();
+    // }
+    // })
+    // });
 }
 const updateUserPromise = (req, res) => {
     logger.info(`${req.method} ${req.originalUrl}, fetching user`);
