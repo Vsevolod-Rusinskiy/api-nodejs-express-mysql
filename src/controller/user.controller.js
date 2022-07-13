@@ -1,17 +1,16 @@
 import database from '../config/mysql.config.js';
+import QUERY from '../query/user.query.js';
 import ServerCustomResponse from '../domain/response.js';
 import logger from '../util/logger.js';
-import QUERY from '../query/user.query.js';
 import bcrypt from 'bcryptjs';
 import {
     validationResult
 } from 'express-validator';
 
-import util from 'util';
 
 
 import pkg from 'jsonwebtoken';
-  
+
 // TODO нужен ли вообще тут payload
 const generateAccessToken = (id) => {
     const payload = {
@@ -122,38 +121,9 @@ class Controller {
     }
 
 
-    getUser(req, res) {
-        return new Promise((resolve, reject) => {
-            database.query(QUERY.SELECT_USER, [req.params.id], (error, results) => {
-                if (!results[0]) {
-                    res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
-                    return reject();
-                }
-                res.send(new ServerCustomResponse(200, 'OK', `User retrieved`, results[0]));
-                return resolve();
-            });
-        });
 
 
-        // try {
-        //     logger.info(`${req.method} ${req.originalUrl}, fetching user`);
-        //     database.query(QUERY.SELECT_USER, [req.params.id], (error, results) => {
-        //         if (!results[0]) {
-        //             res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
-
-        //             // TODO else замена ошибки?
-        //         } else {
-        //             res.send(new ServerCustomResponse(200, 'OK', `User retrieved`, results[0]));
-        //         }
-        //     });
-        // } catch (error) {
-        //     // TODO что - то с базой или интернетом?
-        // }
-
-    };
-
-
-    // async getUser1(req, res) {
+    //  getUser1(req, res) {
     //     try {
     //         logger.info(`${req.method} ${req.originalUrl}, fetching user`);
     //         database.query(QUERY.SELECT_USER, [req.params.id], (error, results) => {

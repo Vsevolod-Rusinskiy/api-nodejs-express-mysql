@@ -1,5 +1,6 @@
 import express from 'express';
 import controller from '../controller/user.controller.js';
+import controller1 from '../controller/user.controller1.js';
 import {
     check
 } from 'express-validator';
@@ -13,7 +14,7 @@ router.post('/user/register', [
     check('email', 'Email cannot be empty!').notEmpty(),
     check('email', 'Fill in correct email, please!').isEmail(),
     check('user_password', 'Password cannot be empty!').notEmpty()
-], controller.registration) 
+], controller1.registration) 
 
 
 router.post('/user/login', controller.login) 
@@ -21,8 +22,9 @@ router.post('/user/login', controller.login)
 router.get('/profiles/:page', tokenValidation, controller.getUsers) // .get(getUsers)
 
 
+router.get('/profile/:id', tokenValidation, controller1.getUser) // .get(getUser)
 
-router.get('/profile/:id', tokenValidation, controller.getUser) // .get(getUser)
+// router.get('/profile/:id', tokenValidation, controller.getUser) // .get(getUser)
 router.put('/profile/:id', tokenValidation, controller.updateUser) // .put(updateUser)
 
 // TODO add token
