@@ -25,8 +25,8 @@ router.get('/profile/:id', tokenValidation, controller1.getUser) // 111
 
 router.put('/profile/:id', tokenValidation, controller1.updateUser) // 111
 
-// TODO add token
-router.post('/file',  controller1.uploadUserPhoto) // .put(updateUser) //111
+// TODO add token ???
+router.post('/file',  controller1.uploadUserPhoto) //  //111
 
 
 

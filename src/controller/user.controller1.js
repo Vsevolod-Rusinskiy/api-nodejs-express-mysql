@@ -8,7 +8,7 @@ import {
 } from 'express-validator';
 import pkg from 'jsonwebtoken';
 
-// TODO нужен ли вообще тут payload
+// TODO нужен ли вообще тут payload? разобраться!
 const generateAccessToken = (id) => {
     const payload = {
         id
@@ -48,7 +48,6 @@ export const HttpStatus = {
 //TODO то что у меня то result то condidate это хуево или норм?
 // TODO check 'fetching user'
 // TODO check funcname, delete Promise 
-// what send in catch block? add error ? and pass it as data in response?
 function makeQuery(query, params) {
     return new Promise((resolve, reject) => {
         database.query(query, params, (error, results) => {
@@ -62,12 +61,10 @@ function makeQuery(query, params) {
 
 const registrationPromise = async (req, res) => {
     logger.info(`${req.method} ${req.originalUrl}, fetching user`);
-
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.send(new ServerCustomResponse(200, 'OK', `Registration error`, errors));
     }
-
     const {
         email,
         user_password
@@ -75,98 +72,45 @@ const registrationPromise = async (req, res) => {
 
     try {
         const candidate = await makeQuery(QUERY.SELECT_USER_EMAIL, [email]);
-
         if (candidate[0]) {
             return res.send(new ServerCustomResponse(200, 'OK', `User already exists`));
         }
-
         const hashPassword = bcrypt.hashSync(user_password, 7);
         req.body.user_password = hashPassword;
-
         const results = await makeQuery(QUERY.CREATE_USER_PROCEDURE, Object.values(req.body));
-
         if (results[0][0]) {
             return res.send(new ServerCustomResponse(200, 'OK', `User created`, results[0][0]));
         }
-
     } catch (error) {
-        res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
-
+        res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`, error));
     }
 }
 
-
-
-
 const loginPromise = async (req, res) => {
     logger.info(`${req.method} ${req.originalUrl}, fetching user`);
-
     const {
         email,
         user_password
     } = req.body;
-
     try {
-
         const candidate = await makeQuery(QUERY.SELECT_USER_EMAIL, [email]);
-
         if (!candidate[0]) {
             return res.send(new ServerCustomResponse(200, 'OK', `No users found`));
         }
-
         const validPassword = bcrypt.compareSync(user_password, candidate[0].user_password);
-
         if (!validPassword) {
             return res.send(new ServerCustomResponse(200, 'OK', `Invalid password`));
         }
-
         const token = generateAccessToken(candidate[0].id);
-
         if (candidate[0]) {
             return res.send(new ServerCustomResponse(200, 'OK', `login successfully`, {
                 token
             }));
         }
     } catch (error) {
-        return res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
+        return res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`, error));
     }
-
-
 }
-
-
-// database.query(QUERY.SELECT_USER_EMAIL, [email], (error, candidate) => {
-// if (error) {
-//     res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
-// return reject(error);
-// }
-
-// if (!candidate[0]) {
-//     res.send(new ServerCustomResponse(200, 'OK', `No users found`));
-//     return reject(`No users found`);
-// }
-
-// const validPassword = bcrypt.compareSync(user_password, candidate[0].user_password);
-
-// if (!validPassword) {
-//     res.send(new ServerCustomResponse(200, 'OK', `Invalid password`));
-//     return reject(`Invalid password`)
-// }
-
-// const token = generateAccessToken(candidate[0].id);
-
-// if (candidate[0]) {
-//     res.send(new ServerCustomResponse(200, 'OK', `login successfully`, {
-//         token
-//     }));
-//     return resolve();
-// }
-// })
-// })
-
-
-
-
 
 const getUserPromise = async (req, res) => {
     logger.info(`${req.method} ${req.originalUrl}, fetching user`);
@@ -178,106 +122,58 @@ const getUserPromise = async (req, res) => {
         if (results[0]) {
             return res.send(new ServerCustomResponse(200, 'OK', `User retrieved`, results[0]));
         }
-    } catch {
-        res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
+    } catch (error) {
+        res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`, error));
     }
 }
 
 const getUsersPromise = async (req, res) => {
-
-
     logger.info(`${req.method} ${req.originalUrl}, fetching user`);
-
     const limit = 10
     const page = req.params.page
     const offset = (page - 1) * limit
     // TODO  можем ли с такими переменныйми перекинуть в query
-
     try {
         const results = await makeQuery(QUERY.SELECT_USERS + offset);
         if (results) {
             return res.send(new ServerCustomResponse(200, 'OK', `Users retrieved`, results));
         }
-    } catch {
-        res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
+    } catch (error) {
+        res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`, error));
     }
 }
+
 const updateUserPromise = async (req, res) => {
     logger.info(`${req.method} ${req.originalUrl}, fetching user`);
-
-
     try {
         const result = await makeQuery(QUERY.SELECT_USER, [req.params.id]);
-
         if (!result[0]) {
             return res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
         }
-
         if (result[0]) {
             logger.info(`${req.method} ${req.originalUrl}, updating user`);
-            // TODO это норм что results не обработали? по логике мы уже  в нем
-
             const candidate = await makeQuery(QUERY.UPDATE_USER, [...Object.values(req.body), req.params.id]);
-
-            // database.query(QUERY.UPDATE_USER, [...Object.values(req.body), req.params.id], (error, results) => {
-            // if (error) {
-            //     res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
-            //     return reject(error);
-            // }
-
-          return  res.send(new ServerCustomResponse(200, 'OK', `User updated`));
-            // return resolve()
-            // });
+            return res.send(new ServerCustomResponse(200, 'OK', `User updated`));
         }
-
-    } catch(error) {
+    } catch (error) {
         return res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`, error));
     }
-
-    // database.query(QUERY.SELECT_USER, [req.params.id], (error, results) => {
-    // if (error) {
-    //     res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
-    //     return reject(error);
-    // }
-    // if (!results[0]) {
-    //     res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
-    //     return reject(`User by id ${req.params.id} was not found`)
-    // }
-    //  else {
-
-    // if (results[0]) {
-    //     logger.info(`${req.method} ${req.originalUrl}, updating user`);
-    //     // TODO это норм что results не обработали? по логике мы уже  в нем
-    //     database.query(QUERY.UPDATE_USER, [...Object.values(req.body), req.params.id], (error, results) => {
-    //         if (error) {
-    //             res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
-    //             return reject(error);
-    //         }
-
-    //         res.send(new ServerCustomResponse(200, 'OK', `User updated`));
-    //         return resolve()
-    //     });
-    // }
-    // });
-
-    // });
 }
 
+// TODO можно оставить в виде промса или нет? типа для дальнейшего использования
 const uploadUserPhotoPromise = (req, res) => {
-    logger.info(`${req.method} ${req.originalUrl}, uploding file...`);
+    logger.info(`${req.method} ${req.originalUrl}, uploading file...`);
     // TODO ограничения 10mb + путь к файлу в базу
     return new Promise((resolve, reject) => {
         let filedata = req.file;
         if (!filedata) {
             res.send(new ServerCustomResponse(400, 'CLIENT_ERROR', `File loading error`));
             return reject(`File loading error`);
-            // res.send("Ошибка при загрузке файла");
         }
-        // TODO так пивать в общем стиле? или добавить else?
+        // TODO  или тут добавить else?
         if (filedata) {
             res.send(new ServerCustomResponse(200, 'OK', `File loaded`));
             return resolve();
-            // res.send("Файл загружен");
         }
     });
 }
