@@ -47,8 +47,8 @@ export const HttpStatus = {
 };
 //TODO то что у меня то result то condidate это хуево или норм?
 // TODO check 'fetching user'
-// TODO check funcname
-
+// TODO check funcname, delete Promise 
+// what send in catch block?
 function makeQuery(query, params) {
     return new Promise((resolve, reject) => {
         database.query(query, params, (error, results) => {
@@ -98,44 +98,72 @@ const registrationPromise = async (req, res) => {
 
 
 
-const loginPromise = (req, res) => {
+const loginPromise = async (req, res) => {
     logger.info(`${req.method} ${req.originalUrl}, fetching user`);
 
-    return new Promise((resolve, reject) => {
-        const {
-            email,
-            user_password
-        } = req.body;
+    const {
+        email,
+        user_password
+    } = req.body;
 
-        database.query(QUERY.SELECT_USER_EMAIL, [email], (error, candidate) => {
-            if (error) {
-                res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
-                return reject(error);
-            }
+    try {
 
-            if (!candidate[0]) {
-                res.send(new ServerCustomResponse(200, 'OK', `No users found`));
-                return reject(`No users found`);
-            }
+        const candidate = await makeQuery(QUERY.SELECT_USER_EMAIL, [email]);
 
-            const validPassword = bcrypt.compareSync(user_password, candidate[0].user_password);
+        if (!candidate[0]) {
+            return res.send(new ServerCustomResponse(200, 'OK', `No users found`));
+        }
 
-            if (!validPassword) {
-                res.send(new ServerCustomResponse(200, 'OK', `Invalid password`));
-                return reject(`Invalid password`)
-            }
+        const validPassword = bcrypt.compareSync(user_password, candidate[0].user_password);
 
-            const token = generateAccessToken(candidate[0].id);
+        if (!validPassword) {
+            return res.send(new ServerCustomResponse(200, 'OK', `Invalid password`));
+        }
 
-            if (candidate[0]) {
-                res.send(new ServerCustomResponse(200, 'OK', `login successfully`, {
-                    token
-                }));
-                return resolve();
-            }
-        })
-    })
+        const token = generateAccessToken(candidate[0].id);
+
+        if (candidate[0]) {
+            return res.send(new ServerCustomResponse(200, 'OK', `login successfully`, {
+                token
+            }));
+        }
+    } catch (error) {
+        return res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
+    }
+
+
 }
+
+
+// database.query(QUERY.SELECT_USER_EMAIL, [email], (error, candidate) => {
+// if (error) {
+//     res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
+// return reject(error);
+// }
+
+// if (!candidate[0]) {
+//     res.send(new ServerCustomResponse(200, 'OK', `No users found`));
+//     return reject(`No users found`);
+// }
+
+// const validPassword = bcrypt.compareSync(user_password, candidate[0].user_password);
+
+// if (!validPassword) {
+//     res.send(new ServerCustomResponse(200, 'OK', `Invalid password`));
+//     return reject(`Invalid password`)
+// }
+
+// const token = generateAccessToken(candidate[0].id);
+
+// if (candidate[0]) {
+//     res.send(new ServerCustomResponse(200, 'OK', `login successfully`, {
+//         token
+//     }));
+//     return resolve();
+// }
+// })
+// })
+
 
 
 
@@ -160,34 +188,19 @@ const getUsersPromise = async (req, res) => {
 
     logger.info(`${req.method} ${req.originalUrl}, fetching user`);
 
-    // return new Promise((resolve, reject) => {
     const limit = 10
     const page = req.params.page
-    const offset = (page - 1) * 10
+    const offset = (page - 1) * limit
     // TODO  можем ли с такими переменныйми перекинуть в query
 
     try {
         const results = await makeQuery(QUERY.SELECT_USERS + offset);
         if (results) {
-           return res.send(new ServerCustomResponse(200, 'OK', `Users retrieved`, results));
+            return res.send(new ServerCustomResponse(200, 'OK', `Users retrieved`, results));
         }
     } catch {
         res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
     }
-
-    // database.query(QUERY.SELECT_USERS + offset, function (error, results) {
-    // if (error) {
-    // res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
-    // return reject(error);
-    // }
-    // if (error) throw error;
-
-    // if (results) {
-    //     res.send(new ServerCustomResponse(200, 'OK', `Users retrieved`, results));
-    //     // return resolve();
-    // }
-    // })
-    // });
 }
 const updateUserPromise = (req, res) => {
     logger.info(`${req.method} ${req.originalUrl}, fetching user`);
@@ -218,9 +231,6 @@ const updateUserPromise = (req, res) => {
                     return resolve()
                 });
             }
-
-
-            // }
         });
 
     });
