@@ -13,7 +13,6 @@ import multer from 'multer'
 dotenv.config();
 const PORT = process.env.SERVER_PORT || 3000;
 const app = express();
-app.use(express.json({limit: '1mb'}));
 app.use(cors({
     origin: '*'
 }));
@@ -21,7 +20,7 @@ app.use(cors({
 
 app.use(express.static(path.resolve() + "/public"));
 
-// app.use(express.json({limit: '1mb'}));
+app.use(express.json());
 // app.use(express.urlencoded({
 //     extended: false,
 //     limit: '1mb'
@@ -40,7 +39,8 @@ const storage = multer.diskStorage({
     }
 })
 
-const upload = multer({storage: storage}).single("filedata");
+const upload = multer({storage: storage, limits: {fileSize: 10000000}}).single("filedata");
+// const upload = multer({storage: storage}).single("filedata");
 app.use(upload);
 
 app.use('/', userRouter)
