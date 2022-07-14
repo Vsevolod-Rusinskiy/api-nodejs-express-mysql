@@ -13,7 +13,6 @@ const generateAccessToken = (id) => {
     const payload = {
         id
     }
-
     return pkg.sign(payload, process.env.JWT_KEY, {
         expiresIn: '24h'
     })
@@ -132,7 +131,7 @@ const getUsersPromise = async (req, res) => {
     const limit = 10
     const page = req.params.page
     const offset = (page - 1) * limit
-    // TODO  можем ли с такими переменныйми перекинуть в query
+    // TODO  may I do this way? (see query file)
     try {
         const results = await makeQuery(QUERY.SELECT_USERS + offset);
         if (results) {
@@ -160,17 +159,17 @@ const updateUserPromise = async (req, res) => {
     }
 }
 
-// TODO можно оставить в виде промса или нет? типа для дальнейшего использования
+// TODO may i use it this way for future? where should i catch the error ?
 const uploadUserPhotoPromise = (req, res) => {
     logger.info(`${req.method} ${req.originalUrl}, uploading file...`);
-    // TODO ограничения 10mb + путь к файлу в базу
+    // TODO 10 mb only !
     return new Promise((resolve, reject) => {
         let filedata = req.file;
         if (!filedata) {
             res.send(new ServerCustomResponse(400, 'CLIENT_ERROR', `File loading error`));
             return reject(`File loading error`);
         }
-        // TODO  или тут добавить else?
+        // TODO  or use else?
         if (filedata) {
             res.send(new ServerCustomResponse(200, 'OK', `File loaded`));
             return resolve();
