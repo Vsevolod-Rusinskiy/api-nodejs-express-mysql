@@ -6,17 +6,13 @@ import bcrypt from 'bcryptjs';
 import {
     validationResult
 } from 'express-validator';
-
-
-
 import pkg from 'jsonwebtoken';
 
-// TODO нужен ли вообще тут payload
+// TODO how it works ? clear the matter
 const generateAccessToken = (id) => {
     const payload = {
         id
     }
-
     return pkg.sign(payload, process.env.JWT_KEY, {
         expiresIn: '24h'
     })
@@ -48,143 +44,142 @@ export const HttpStatus = {
         status: 'INTERNAL_SERVER_ERROR'
     }
 };
-
-// TODO returns in general ?
-
-
-// TODO can i use object instead here?
-// ASYNC лучше убрать?
-
-// 
-
-class Controller {
-    // registration(req, res) {
-    //     logger.info(`${req.method} ${req.originalUrl}, fetching user`);
-
-    //     try {
-    //         const errors = validationResult(req);
-    //         if (!errors.isEmpty()) {
-    //             return res.send(new ServerCustomResponse(200, 'OK', `Registration error`, errors));
-    //         }
-
-    //         const {
-    //             email,
-    //             user_password
-    //         } = req.body;
-
-    //         // TODO catch error, which error it catchs  ??? 
-    //         // TODO error ???
-    //         database.query(QUERY.SELECT_USER_EMAIL, [email], (error, candidate) => {
-    //             if (candidate[0]) {
-    //                 return res.send(new ServerCustomResponse(200, 'OK', `User already exists`));
-    //             }
-    //             const hashPassword = bcrypt.hashSync(user_password, 7);
-    //             req.body.user_password = hashPassword;
-
-    //             database.query(QUERY.CREATE_USER_PROCEDURE, Object.values(req.body), (error, results) => {
-    //                 return res.send(new ServerCustomResponse(200, 'OK', `User created`, results[0][0]));
-    //             })
-    //         })
-
-    //         // await database.query(QUERY.SELECT_USER_EMAIL, [email])
-    //     } catch (error) {
-    //         res.send(new ServerCustomResponse(400, 'Error', `Registration error`));
-    //     }
-    // }
-
-    // login(req, res) {
-    //     try {
-    //         logger.info(`${req.method} ${req.originalUrl}, fetching user`);
-
-    //         const {
-    //             email,
-    //             user_password
-    //         } = req.body;
-
-    //         database.query(QUERY.SELECT_USER_EMAIL, [email], (error, candidate) => {
-    //             if (!candidate[0]) {
-    //                 return res.send(new ServerCustomResponse(200, 'OK', `No users found`));
-    //             }
-    //             const validPassword = bcrypt.compareSync(user_password, candidate[0].user_password);
-    //             if (!validPassword) {
-    //                 return res.send(new ServerCustomResponse(200, 'OK', `Invalid password`));
-    //             }
-    //             const token = generateAccessToken(candidate[0].id);
-    //             return res.send(new ServerCustomResponse(200, 'OK', `login successfully`, {
-    //                 token
-    //             }));
-    //         })
-
-    //     } catch (error) {
-    //         res.send(new ServerCustomResponse(400, 'BAD_REQUEST', `Login error`));
-    //     }
-    // }
+//TODO 
+// TODO check 'fetching user...'
+// TODO check funcname, delete Promise 
 
 
+function makeQuery(query, params) {
+    return new Promise((resolve, reject) => {
+        database.query(query, params, (error, results) => {
+            if (error) {
+                reject(error);
+            }
+            resolve(results);
+        })
+    });
+}
 
+const Controller = {
+    registration: async (req, res) => {
+        logger.info(`${req.method} ${req.originalUrl}, fetching user...`);
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.send(new ServerCustomResponse(200, 'OK', `Registration error`, errors));
+        }
+        const {
+            email,
+            user_password
+        } = req.body;
 
-    //  getUser1(req, res) {
-    //     try {
-    //         logger.info(`${req.method} ${req.originalUrl}, fetching user`);
-    //         database.query(QUERY.SELECT_USER, [req.params.id], (error, results) => {
-    //             if (!results[0]) {
-    //                 res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
+        try {
+            const candidate = await makeQuery(QUERY.SELECT_USER_EMAIL, [email]);
+            if (candidate[0]) {
+                return res.send(new ServerCustomResponse(200, 'OK', `User already exists`));
+            }
+            const hashPassword = bcrypt.hashSync(user_password, 7);
+            req.body.user_password = hashPassword;
+            const results = await makeQuery(QUERY.CREATE_USER_PROCEDURE, Object.values(req.body));
+            if (results[0][0]) {
+                return res.send(new ServerCustomResponse(200, 'OK', `User created`, results[0][0]));
+            }
+        } catch (error) {
+            res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`, error));
+        }
+    },
 
-    //                 // TODO else замена ошибки?
-    //             } else {
-    //                 res.send(new ServerCustomResponse(200, 'OK', `User retrieved`, results[0]));
-    //             }
-    //         });
-    //     } catch (error) {
-    //         // TODO что - то с базой или интернетом?
-    //     }
+    login: async (req, res) => {
+        logger.info(`${req.method} ${req.originalUrl}, fetching user...`);
+        const {
+            email,
+            user_password
+        } = req.body;
+        try {
+            const candidate = await makeQuery(QUERY.SELECT_USER_EMAIL, [email]);
+            if (!candidate[0]) {
+                return res.send(new ServerCustomResponse(200, 'OK', `No users found`));
+            }
+            const validPassword = bcrypt.compareSync(user_password, candidate[0].user_password);
+            if (!validPassword) {
+                return res.send(new ServerCustomResponse(200, 'OK', `Invalid password`));
+            }
+            const token = generateAccessToken(candidate[0].id);
+            if (candidate[0]) {
+                return res.send(new ServerCustomResponse(200, 'OK', `login successfully`, {
+                    token
+                }));
+            }
+        } catch (error) {
+            return res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`, error));
+        }
+    },
 
-    // };
-
-
-
-    updateUser(req, res) {
-        logger.info(`${req.method} ${req.originalUrl}, fetching user`);
-
-        database.query(QUERY.SELECT_USER, [req.params.id], (error, results) => {
+    getUser: async (req, res) => {
+        logger.info(`${req.method} ${req.originalUrl}, fetching user...`);
+        try {
+            const results = await makeQuery(QUERY.SELECT_USER, [req.params.id]);
             if (!results[0]) {
-                res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
-            } else {
-                logger.info(`${req.method} ${req.originalUrl}, updating user`);
+                return res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
+            }
+            if (results[0]) {
+                return res.send(new ServerCustomResponse(200, 'OK', `User retrieved`, results[0]));
+            }
+        } catch (error) {
+            res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`, error));
+        }
+    },
 
-                database.query(QUERY.UPDATE_USER, [...Object.values(req.body), req.params.id], (error, results) => {
-                    if (!error) {
-                        res.send(new ServerCustomResponse(200, 'OK', `User updated`));
-                    } else {
-                        logger.error(error.message);
-                        res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
-                    }
-                });
+    getUsers: async (req, res) => {
+        logger.info(`${req.method} ${req.originalUrl}, fetching user...`);
+        const limit = 10
+        const page = req.params.page
+        const offset = (page - 1) * limit
+        // TODO  may I do this way? (see query file)
+        try {
+            const results = await makeQuery(QUERY.SELECT_USERS + offset);
+            if (results) {
+                return res.send(new ServerCustomResponse(200, 'OK', `Users retrieved`, results));
+            }
+        } catch (error) {
+            res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`, error));
+        }
+    },
+
+    updateUser: async (req, res) => {
+        logger.info(`${req.method} ${req.originalUrl}, fetching user...`);
+        try {
+            const result = await makeQuery(QUERY.SELECT_USER, [req.params.id]);
+            if (!result[0]) {
+                return res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
+            }
+            if (result[0]) {
+                logger.info(`${req.method} ${req.originalUrl}, updating user...`);
+                const candidate = await makeQuery(QUERY.UPDATE_USER, [...Object.values(req.body), req.params.id]);
+                return res.send(new ServerCustomResponse(200, 'OK', `User updated`));
+            }
+        } catch (error) {
+            return res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`, error));
+        }
+    },
+
+    // TODO may i use it this way for future? where should i catch the error ?
+    uploadUserPhoto: (req, res) => {
+        logger.info(`${req.method} ${req.originalUrl}, uploading file...`);
+        // TODO 10 mb only !
+        return new Promise((resolve, reject) => {
+            let filedata = req.file;
+            if (!filedata) {
+                res.send(new ServerCustomResponse(400, 'CLIENT_ERROR', `File loading error`));
+                return reject(`File loading error`);
+            }
+            // TODO  or else?
+            if (filedata) {
+                res.send(new ServerCustomResponse(200, 'OK', `File loaded`));
+                return resolve();
             }
         });
     }
-
-    getUsers(req, res) {
-        const limit = 3
-        const page = req.params.page
-        const offset = (page - 1) * limit
-        // TODO  можем ли с такими переменныйми перекинуть в query
-        // есть ли у меня schema?
-        const usersQuery = `select * from users ORDER BY created_at limit ${limit} OFFSET ${offset}`
-        // TODO  Что писать вместо второго параметра?
-        database.query(usersQuery, function (error, results) {
-            if (error) throw error;
-            return res.send(new ServerCustomResponse(200, 'OK', `Users retrieved`, results));
-        })
-    }
-
-    uploadUserPhoto(req, res, next) {
-        let filedata = req.file;
-        console.log(filedata);
-        if (!filedata)
-            res.send("Ошибка при загрузке файла");
-        else
-            res.send("Файл загружен");
-    };
 }
-export default new Controller();
+
+
+export default Controller;
