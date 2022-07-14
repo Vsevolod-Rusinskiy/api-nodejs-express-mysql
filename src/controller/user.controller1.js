@@ -48,7 +48,7 @@ export const HttpStatus = {
 //TODO то что у меня то result то condidate это хуево или норм?
 // TODO check 'fetching user'
 // TODO check funcname, delete Promise 
-// what send in catch block?
+// what send in catch block? add error ? and pass it as data in response?
 function makeQuery(query, params) {
     return new Promise((resolve, reject) => {
         database.query(query, params, (error, results) => {
@@ -202,38 +202,65 @@ const getUsersPromise = async (req, res) => {
         res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
     }
 }
-const updateUserPromise = (req, res) => {
+const updateUserPromise = async (req, res) => {
     logger.info(`${req.method} ${req.originalUrl}, fetching user`);
 
-    return new Promise((resolve, reject) => {
 
-        database.query(QUERY.SELECT_USER, [req.params.id], (error, results) => {
-            if (error) {
-                res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
-                return reject(error);
-            }
-            if (!results[0]) {
-                res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
-                return reject(`User by id ${req.params.id} was not found`)
-            }
-            //  else {
+    try {
+        const result = await makeQuery(QUERY.SELECT_USER, [req.params.id]);
 
-            if (results[0]) {
-                logger.info(`${req.method} ${req.originalUrl}, updating user`);
-                // TODO это норм что results не обработали? по логике мы уже  в нем
-                database.query(QUERY.UPDATE_USER, [...Object.values(req.body), req.params.id], (error, results) => {
-                    if (error) {
-                        res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
-                        return reject(error);
-                    }
+        if (!result[0]) {
+            return res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
+        }
 
-                    res.send(new ServerCustomResponse(200, 'OK', `User updated`));
-                    return resolve()
-                });
-            }
-        });
+        if (result[0]) {
+            logger.info(`${req.method} ${req.originalUrl}, updating user`);
+            // TODO это норм что results не обработали? по логике мы уже  в нем
 
-    });
+            const candidate = await makeQuery(QUERY.UPDATE_USER, [...Object.values(req.body), req.params.id]);
+
+            // database.query(QUERY.UPDATE_USER, [...Object.values(req.body), req.params.id], (error, results) => {
+            // if (error) {
+            //     res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
+            //     return reject(error);
+            // }
+
+          return  res.send(new ServerCustomResponse(200, 'OK', `User updated`));
+            // return resolve()
+            // });
+        }
+
+    } catch(error) {
+        return res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`, error));
+    }
+
+    // database.query(QUERY.SELECT_USER, [req.params.id], (error, results) => {
+    // if (error) {
+    //     res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
+    //     return reject(error);
+    // }
+    // if (!results[0]) {
+    //     res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
+    //     return reject(`User by id ${req.params.id} was not found`)
+    // }
+    //  else {
+
+    // if (results[0]) {
+    //     logger.info(`${req.method} ${req.originalUrl}, updating user`);
+    //     // TODO это норм что results не обработали? по логике мы уже  в нем
+    //     database.query(QUERY.UPDATE_USER, [...Object.values(req.body), req.params.id], (error, results) => {
+    //         if (error) {
+    //             res.send(new ServerCustomResponse(500, 'INTERNAL_SERVER_ERROR', `Internal server error`));
+    //             return reject(error);
+    //         }
+
+    //         res.send(new ServerCustomResponse(200, 'OK', `User updated`));
+    //         return resolve()
+    //     });
+    // }
+    // });
+
+    // });
 }
 
 const uploadUserPhotoPromise = (req, res) => {
