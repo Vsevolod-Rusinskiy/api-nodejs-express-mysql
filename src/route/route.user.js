@@ -25,7 +25,7 @@ router.get('/profile/:id', tokenValidation, controller.getUser)
 router.put('/profile/:id', tokenValidation, controller.updateUser) 
 
 // TODO add token ???
-router.post('/file',  controller.uploadUserPhoto) 
+router.post('/file/',  controller.uploadUserPhoto) 
 
 
 export default router;

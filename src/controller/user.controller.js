@@ -8,6 +8,7 @@ import {
 } from 'express-validator';
 import pkg from 'jsonwebtoken';
 
+// 
 // TODO how it works ? clear the matter
 const generateAccessToken = (id) => {
     const payload = {
@@ -49,7 +50,7 @@ export const HttpStatus = {
 // TODO check funcname, delete Promise 
 
 
-function makeQuery(query, params) {
+function makeQueryPromise(query, params) {
     return new Promise((resolve, reject) => {
         database.query(query, params, (error, results) => {
             if (error) {
@@ -59,6 +60,17 @@ function makeQuery(query, params) {
         })
     });
 }
+
+function uploadFilePromise(req) {
+    return new Promise((resolve, reject) => {
+        if (!req) {
+            reject('Sorry, there is no file here');
+        }
+        resolve(req);
+    });
+}
+
+
 
 const Controller = {
     registration: async (req, res) => {
@@ -73,13 +85,13 @@ const Controller = {
         } = req.body;
 
         try {
-            const candidate = await makeQuery(QUERY.SELECT_USER_EMAIL, [email]);
+            const candidate = await makeQueryPromise(QUERY.SELECT_USER_EMAIL, [email]);
             if (candidate[0]) {
                 return res.send(new ServerCustomResponse(200, 'OK', `User already exists`));
             }
             const hashPassword = bcrypt.hashSync(user_password, 7);
             req.body.user_password = hashPassword;
-            const results = await makeQuery(QUERY.CREATE_USER_PROCEDURE, Object.values(req.body));
+            const results = await makeQueryPromise(QUERY.CREATE_USER_PROCEDURE, Object.values(req.body));
             if (results[0][0]) {
                 return res.send(new ServerCustomResponse(200, 'OK', `User created`, results[0][0]));
             }
@@ -95,7 +107,7 @@ const Controller = {
             user_password
         } = req.body;
         try {
-            const candidate = await makeQuery(QUERY.SELECT_USER_EMAIL, [email]);
+            const candidate = await makeQueryPromise(QUERY.SELECT_USER_EMAIL, [email]);
             if (!candidate[0]) {
                 return res.send(new ServerCustomResponse(200, 'OK', `No users found`));
             }
@@ -117,7 +129,7 @@ const Controller = {
     getUser: async (req, res) => {
         logger.info(`${req.method} ${req.originalUrl}, fetching user...`);
         try {
-            const results = await makeQuery(QUERY.SELECT_USER, [req.params.id]);
+            const results = await makeQueryPromise(QUERY.SELECT_USER, [req.params.id]);
             if (!results[0]) {
                 return res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
             }
@@ -136,7 +148,7 @@ const Controller = {
         const offset = (page - 1) * limit
         // TODO  may I do this way? (see query file)
         try {
-            const results = await makeQuery(QUERY.SELECT_USERS + offset);
+            const results = await makeQueryPromise(QUERY.SELECT_USERS + offset);
             if (results) {
                 return res.send(new ServerCustomResponse(200, 'OK', `Users retrieved`, results));
             }
@@ -148,13 +160,13 @@ const Controller = {
     updateUser: async (req, res) => {
         logger.info(`${req.method} ${req.originalUrl}, fetching user...`);
         try {
-            const result = await makeQuery(QUERY.SELECT_USER, [req.params.id]);
+            const result = await makeQueryPromise(QUERY.SELECT_USER, [req.params.id]);
             if (!result[0]) {
                 return res.send(new ServerCustomResponse(404, 'NOT_FOUND', `User by id ${req.params.id} was not found`));
             }
             if (result[0]) {
                 logger.info(`${req.method} ${req.originalUrl}, updating user...`);
-                const candidate = await makeQuery(QUERY.UPDATE_USER, [...Object.values(req.body), req.params.id]);
+                const candidate = await makeQueryPromise(QUERY.UPDATE_USER, [...Object.values(req.body), req.params.id]);
                 return res.send(new ServerCustomResponse(200, 'OK', `User updated`));
             }
         } catch (error) {
@@ -162,22 +174,36 @@ const Controller = {
         }
     },
 
-    // TODO may i use it this way for future? where should i catch the error ?
-    uploadUserPhoto: (req, res) => {
+    uploadUserPhoto: async (req, res) => {
         logger.info(`${req.method} ${req.originalUrl}, uploading file...`);
-        // TODO 10 mb only !
-        return new Promise((resolve, reject) => {
-            let filedata = req.file;
-            if (!filedata) {
-                res.send(new ServerCustomResponse(400, 'CLIENT_ERROR', `File loading error`));
-                return reject(`File loading error`);
-            }
-            // TODO  or else?
-            if (filedata) {
-                res.send(new ServerCustomResponse(200, 'OK', `File loaded`));
-                return resolve();
-            }
-        });
+
+        try {
+            const result = await uploadFilePromise(req);
+
+            console.log(result.body.id);
+            console.log(result.file.filename);
+
+            const candidate = await makeQueryPromise(QUERY.UPDATE_USER_PHOTO + result.body.id, [result.file.filename]);
+
+            res.send('1111')
+        } catch (error) {
+            console.log(error);
+            res.send('0000')
+
+        }
+
+        // return new Promise((resolve, reject) => {
+        //     let filedata = req.file;
+        //     if (!filedata) {
+        //         res.send(new ServerCustomResponse(400, 'CLIENT_ERROR', `File loading error`));
+        //         return reject(`File loading error`);
+        //     }
+        //     // TODO  or else?
+        //     if (filedata) {
+        //         res.send(new ServerCustomResponse(200, 'OK', `File loaded`));
+        //         return resolve();
+        //     }
+        // });
     }
 }
 
