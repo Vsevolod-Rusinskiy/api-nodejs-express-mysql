@@ -6,7 +6,6 @@ const {
 
 
 export const tokenValidation = (req, res, next) => {
-
     try {
         let token = req.get("authorization").slice(7);
         if (token) {
@@ -22,6 +21,3 @@ export const tokenValidation = (req, res, next) => {
         return res.send(new ServerCustomResponse(403, 'FORBIDDIEN', `User not authorized`));
     }
 }
-
-
-

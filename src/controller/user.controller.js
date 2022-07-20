@@ -8,8 +8,6 @@ import {
 } from 'express-validator';
 import pkg from 'jsonwebtoken';
 
-// 
-// TODO how it works ? clear the matter
 const generateAccessToken = (id) => {
     const payload = {
         id
@@ -18,37 +16,6 @@ const generateAccessToken = (id) => {
         expiresIn: '24h'
     })
 }
-
-export const HttpStatus = {
-    OK: {
-        code: 200,
-        status: 'OK'
-    },
-    CREATED: {
-        code: 201,
-        status: 'CREATED'
-    },
-    NO_CONTENT: {
-        code: 204,
-        status: 'NO_CONTENT'
-    },
-    BAD_REQUEST: {
-        code: 400,
-        status: 'BAD_REQUEST'
-    },
-    NOT_FOUND: {
-        code: 404,
-        status: 'NOT_FOUND'
-    },
-    INTERNAL_SERVER_ERROR: {
-        code: 500,
-        status: 'INTERNAL_SERVER_ERROR'
-    }
-};
-//TODO 
-// TODO check 'fetching user...'
-// TODO check funcname, delete Promise 
-
 
 function makeQueryPromise(query, params) {
     return new Promise((resolve, reject) => {
@@ -64,7 +31,8 @@ function makeQueryPromise(query, params) {
 function uploadFilePromise(req) {
     return new Promise((resolve, reject) => {
         if (!req) {
-            reject('Sorry, there is no file here');
+            // reject('Sorry, there is no file here');
+            reject(new ServerCustomResponse(400, 'BAD_REQUEST', `File loading error`));
         }
         resolve(req);
     });
@@ -77,7 +45,8 @@ const Controller = {
         logger.info(`${req.method} ${req.originalUrl}, fetching user...`);
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.send(new ServerCustomResponse(200, 'OK', `Registration error`, errors));
+            // return res.send(new ServerCustomResponse(200, 'OK', `Registration error`, errors));
+            return res.send(new ServerCustomResponse(403, 'FORBIDDEN', `Registration error`, errors));
         }
         const {
             email,
@@ -146,10 +115,12 @@ const Controller = {
         const limit = 10
         const page = req.params.page
         const offset = (page - 1) * limit
-        // TODO  may I do this way? (see query file)
         try {
             const results = await makeQueryPromise(QUERY.SELECT_USERS + offset);
-            if (results) {
+            if (!results[0]) {
+                return res.send(new ServerCustomResponse(404, 'NOT_FOUND', `Page not found`, 'No users'));
+            }
+            if (results[0]) {
                 return res.send(new ServerCustomResponse(200, 'OK', `Users retrieved`, results));
             }
         } catch (error) {
@@ -166,7 +137,7 @@ const Controller = {
             }
             if (result[0]) {
                 logger.info(`${req.method} ${req.originalUrl}, updating user...`);
-                const candidate = await makeQueryPromise(QUERY.UPDATE_USER, [...Object.values(req.body), req.params.id]);
+                await makeQueryPromise(QUERY.UPDATE_USER, [...Object.values(req.body), req.params.id]);
                 return res.send(new ServerCustomResponse(200, 'OK', `User updated`));
             }
         } catch (error) {
@@ -176,34 +147,13 @@ const Controller = {
 
     uploadUserPhoto: async (req, res) => {
         logger.info(`${req.method} ${req.originalUrl}, uploading file...`);
-
         try {
             const result = await uploadFilePromise(req);
-
-            console.log(result.body.id);
-            console.log(result.file.filename);
-
-            const candidate = await makeQueryPromise(QUERY.UPDATE_USER_PHOTO + result.body.id, [result.file.filename]);
-
-            res.send('1111')
+            await makeQueryPromise(QUERY.UPDATE_USER_PHOTO + result.body.id, [result.file.filename]);
+            res.status(201).send('File was loaded!');
         } catch (error) {
-            console.log(error);
-            res.send('0000')
-
+            res.send(error)
         }
-
-        // return new Promise((resolve, reject) => {
-        //     let filedata = req.file;
-        //     if (!filedata) {
-        //         res.send(new ServerCustomResponse(400, 'CLIENT_ERROR', `File loading error`));
-        //         return reject(`File loading error`);
-        //     }
-        //     // TODO  or else?
-        //     if (filedata) {
-        //         res.send(new ServerCustomResponse(200, 'OK', `File loaded`));
-        //         return resolve();
-        //     }
-        // });
     }
 }
 
