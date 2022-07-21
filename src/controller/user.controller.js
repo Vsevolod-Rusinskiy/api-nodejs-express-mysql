@@ -31,7 +31,6 @@ function makeQueryPromise(query, params) {
 function uploadFilePromise(req) {
     return new Promise((resolve, reject) => {
         if (!req) {
-            // reject('Sorry, there is no file here');
             reject(new ServerCustomResponse(400, 'BAD_REQUEST', `File loading error`));
         }
         resolve(req);
@@ -45,7 +44,6 @@ const Controller = {
         logger.info(`${req.method} ${req.originalUrl}, fetching user...`);
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            // return res.send(new ServerCustomResponse(200, 'OK', `Registration error`, errors));
             return res.send(new ServerCustomResponse(403, 'FORBIDDEN', `Registration error`, errors));
         }
         const {
